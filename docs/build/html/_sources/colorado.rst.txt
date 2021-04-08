@@ -1,0 +1,46 @@
+colorado package
+================
+
+Submodules
+----------
+
+colorado\.aims\_tools module
+----------------------------
+
+.. automodule:: colorado.aims_tools
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+colorado\.anatomist\_tools module
+---------------------------------
+
+.. automodule:: colorado.anatomist_tools
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+colorado\.bucket module
+-----------------------
+
+.. automodule:: colorado.bucket
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+colorado\.mesh module
+---------------------
+
+.. automodule:: colorado.mesh
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: colorado
+    :members:
+    :undoc-members:
+    :show-inheritance:

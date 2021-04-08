@@ -1,0 +1,7 @@
+colorado
+========
+
+.. toctree::
+   :maxdepth: 4
+
+   colorado
