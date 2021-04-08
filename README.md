@@ -24,5 +24,5 @@ $ ./install_plotly_for_jupyter.sh
 ```
 
 ### Resources
-* [simple example](tutorial/tutorial.html)
-* [documentation]()
+* [simple example](https://neurospin.github.io/colorado/tutorial/tutorial.html)
+* [documentation](https://neurospin.github.io/colorado/build/html/colorado.html#module-colorado)
