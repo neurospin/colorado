@@ -1,0 +1,10 @@
+.vscode
+*.rst
+
+*.egg-info
+
+__pycache__/
+*.py[cod]
+scripts/
+
+*.ipynb
