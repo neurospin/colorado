@@ -18,10 +18,11 @@ It can be used, for example, inside jupyter notebooks.
 $ cd colorado
 $ pip install .
 ```
-3. install plotly for jupyter (takes minutes):
+3. install node and npm (takes minutes). Run the `instal_node.sh` script:
 ```
-$ ./install_plotly_for_jupyter.sh
+$ ./install_node.sh
 ```
+4. Install the plotly plug-in in [Jupyter notebook](https://plotly.com/python/getting-started/#jupyter-notebook-support) or [Jupyter-lab](https://plotly.com/python/getting-started/#jupyterlab-support) (instructions in the links).
 
 ### Resources
 * [simple example](https://neurospin.github.io/colorado/tutorial/tutorial.html)
