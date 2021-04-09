@@ -2,6 +2,13 @@
 
 ## Plot pyAims entities in Python Notebooks.
 
+```{python}
+import colorado as cld
+meshR = aims.read('data/subject01_Rhemi.mesh')
+meshL = aims.read('data/subject01_Lhemi.mesh')
+cld.draw([meshL, meshR])
+```
+
 ![image](./docs/images/brain.jpg)
 
 The `colorado` module is an interface between `aims` and `plotly`.
