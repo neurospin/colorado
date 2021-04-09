@@ -53,6 +53,67 @@ def aims_bucket_to_ndarray(aims_bucket):
     return v
 
 
+def numpy_bucket_to_aims_volume(ndarray):
+    """Create a new volume from the numpy ndarray.
+    The array is first converted to Fortran ordering,
+    as requested by the Volume constructor"""
+    return aims.Volume(np.asfortranarray(ndarray))
+
+
+def bucket_to_volume_numpy(bucket_array, pad=0):
+    """Transform a bucket into a 3d boolean volume.
+    Input and output types are numpy.ndarray"""
+    a = bucket_array
+    v_max = a.max(axis=0)
+    v_min = a.min(axis=0)
+    v_size = abs(v_max - v_min) + 1 + pad*2
+
+    vol = aims.Volume(*v_size, dtype='int16')
+    vol.fill(0)
+    avol = vol[:].squeeze()
+
+    for p in a:
+        x, y, z = np.round(p-v_min+pad).astype(int)
+        avol[x, y, z] = 1
+
+    return vol
+
+
+def volume_to_bucket(volume):
+    """Transform a binary volume into a bucket.
+    The bucket contains the coordinates of the non-zero voxels in volume.
+
+    Args:
+        volume (numpy array | aims volume): 3D image
+
+    Returns:
+        numpy.ndarray: bucket of non-zero points coordinates
+    """
+    return np.argwhere(volume[:].squeeze())
+
+
+def bucket_to_volume_aims(aims_bucket, pad=10):
+    """Transform a bucket into a 3d boolean volume.
+    Input and output types are aims objects"""
+    abucket = aims_bucket_to_ndarray(aims_bucket)
+    return numpy_bucket_to_aims_volume(bucket_to_volume_numpy(abucket, pad=pad))
+
+
+def add_border(x, thickness, value):
+    """add borders to volume (numpy)"""
+    t = thickness
+    x[:t, :, :] = value
+    x[-t:, :, :] = value
+
+    x[:, :t, :] = value
+    x[:, -t:, :] = value
+
+    x[:, :, :t] = value
+    x[:, :, -t:] = value
+
+    return x
+
+
 class PyMesh:
     def __init__(self, aims_mesh=None):
         """A multi-frame mesh.
