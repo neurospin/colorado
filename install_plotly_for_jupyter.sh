@@ -4,7 +4,7 @@ DOWNLOAD_PATH="$HOME/.tmp/node-latest-install"
 NODE_URL="https://nodejs.org/dist/node-latest.tar.gz"
 NODE_FILE="node-latest.tar.gz"
 
-# echo 'export PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc
+echo 'export PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc
 . ~/.bashrc
 mkdir -p ~/.local/bin
 mkdir -p "$DOWNLOAD_PATH"
