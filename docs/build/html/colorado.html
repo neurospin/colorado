@@ -225,8 +225,14 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="colorado.aims_tools.aims_bucket_to_ndarray">
-<code class="descclassname">colorado.aims_tools.</code><code class="descname">aims_bucket_to_ndarray</code><span class="sig-paren">(</span><em>aims_bucket</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.aims_tools.aims_bucket_to_ndarray" title="Permalink to this definition">¶</a></dt>
+<dt id="colorado.aims_tools.add_border">
+<code class="descclassname">colorado.aims_tools.</code><code class="descname">add_border</code><span class="sig-paren">(</span><em>x</em>, <em>thickness</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.aims_tools.add_border" title="Permalink to this definition">¶</a></dt>
+<dd><p>add borders to volume (numpy)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="colorado.aims_tools.bucket_aims_to_ndarray">
+<code class="descclassname">colorado.aims_tools.</code><code class="descname">bucket_aims_to_ndarray</code><span class="sig-paren">(</span><em>aims_bucket</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.aims_tools.bucket_aims_to_ndarray" title="Permalink to this definition">¶</a></dt>
 <dd><p>Transform an aims bucket into numpy array</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -243,8 +249,37 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="colorado.aims_tools.ndarray_to_vol">
-<code class="descclassname">colorado.aims_tools.</code><code class="descname">ndarray_to_vol</code><span class="sig-paren">(</span><em>ndarray</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.aims_tools.ndarray_to_vol" title="Permalink to this definition">¶</a></dt>
+<dt id="colorado.aims_tools.bucket_aims_to_volume_aims">
+<code class="descclassname">colorado.aims_tools.</code><code class="descname">bucket_aims_to_volume_aims</code><span class="sig-paren">(</span><em>aims_bucket</em>, <em>pad=0</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.aims_tools.bucket_aims_to_volume_aims" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform a bucket into a 3d boolean volume.
+Input and output types are aims objects</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="colorado.aims_tools.bucket_numpy_to_volume_aims">
+<code class="descclassname">colorado.aims_tools.</code><code class="descname">bucket_numpy_to_volume_aims</code><span class="sig-paren">(</span><em>bucket_array</em>, <em>pad=0</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.aims_tools.bucket_numpy_to_volume_aims" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform a bucket into a 3d boolean volume.
+Input and output types are numpy.ndarray</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="colorado.aims_tools.bucket_numpy_to_volume_numpy">
+<code class="descclassname">colorado.aims_tools.</code><code class="descname">bucket_numpy_to_volume_numpy</code><span class="sig-paren">(</span><em>bucket_array</em>, <em>pad=0</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.aims_tools.bucket_numpy_to_volume_numpy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform a bucket into a 3d boolean volume.
+Input and output types are numpy.ndarray</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="colorado.aims_tools.ndarray_to_aims_volume">
+<code class="descclassname">colorado.aims_tools.</code><code class="descname">ndarray_to_aims_volume</code><span class="sig-paren">(</span><em>ndarray</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.aims_tools.ndarray_to_aims_volume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new volume with the data in ndarray.</p>
+<p>The array is first converted to Fortran ordering,
+as requested by the Volume constructor.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="colorado.aims_tools.ndarray_to_volume_aims">
+<code class="descclassname">colorado.aims_tools.</code><code class="descname">ndarray_to_volume_aims</code><span class="sig-paren">(</span><em>ndarray</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.aims_tools.ndarray_to_volume_aims" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new volume from the numpy ndarray.
 The array is first converted to Fortran ordering,
 as requested by the Volume constructor</p>
@@ -263,8 +298,8 @@ as requested by the Volume constructor</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="colorado.aims_tools.new_vol_like">
-<code class="descclassname">colorado.aims_tools.</code><code class="descname">new_vol_like</code><span class="sig-paren">(</span><em>vol</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.aims_tools.new_vol_like" title="Permalink to this definition">¶</a></dt>
+<dt id="colorado.aims_tools.new_volume_aims_like">
+<code class="descclassname">colorado.aims_tools.</code><code class="descname">new_volume_aims_like</code><span class="sig-paren">(</span><em>vol</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.aims_tools.new_volume_aims_like" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new empty aims.Volume with the same shape as vol</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -275,6 +310,44 @@ as requested by the Volume constructor</p>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">an empty Aims Volume object of the same shape as vol</td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">aims.Volume</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colorado.aims_tools.volume_to_bucket_aims">
+<code class="descclassname">colorado.aims_tools.</code><code class="descname">volume_to_bucket_aims</code><span class="sig-paren">(</span><em>volume</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.aims_tools.volume_to_bucket_aims" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="colorado.aims_tools.volume_to_bucket_numpy">
+<code class="descclassname">colorado.aims_tools.</code><code class="descname">volume_to_bucket_numpy</code><span class="sig-paren">(</span><em>volume</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.aims_tools.volume_to_bucket_numpy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform a binary volume into a bucket.
+The bucket contains the coordinates of the non-zero voxels in volume.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>volume</strong> (<em>numpy array | aims volume</em>) – 3D image</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">bucket of non-zero points coordinates</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">numpy.ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colorado.aims_tools.volume_to_ndarray">
+<code class="descclassname">colorado.aims_tools.</code><code class="descname">volume_to_ndarray</code><span class="sig-paren">(</span><em>volume</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.aims_tools.volume_to_ndarray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform aims volume in numpy array</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>volume</strong> (<em>aims.volume</em>) – aims volume</td>
 </tr>
 </tbody>
 </table>
@@ -305,6 +378,24 @@ as requested by the Volume constructor</p>
 <div class="section" id="module-colorado.bucket">
 <span id="colorado-bucket-module"></span><h2>colorado.bucket module<a class="headerlink" href="#module-colorado.bucket" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
+<dt id="colorado.bucket.draw_numpy_bucket">
+<code class="descclassname">colorado.bucket.</code><code class="descname">draw_numpy_bucket</code><span class="sig-paren">(</span><em>bucket</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.bucket.draw_numpy_bucket" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw one bucket from numpy array</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>bucket</strong> (<em>numpy.ndarray</em><em>, </em><em>shape</em><em> (</em><em>N</em><em>,</em><em>3</em><em>)</em>) – bucket</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a plotly figure representing the bucket</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">plotly.graphic_objects.Figure</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
 <dt id="colorado.bucket.draw_numpy_buckets">
 <code class="descclassname">colorado.bucket.</code><code class="descname">draw_numpy_buckets</code><span class="sig-paren">(</span><em>list_of_buckets</em>, <em>labels=None</em>, <em>transpose=True</em>, <em>x_shift=0</em>, <em>fig=None</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.bucket.draw_numpy_buckets" title="Permalink to this definition">¶</a></dt>
 <dd><p>Draw buckets from numpy arrays.</p>
@@ -332,7 +423,7 @@ Each array must be a Nx3 numpy.ndarray containing the coordinates of N points</l
 
 <dl class="function">
 <dt id="colorado.bucket.get_bucket_g_o">
-<code class="descclassname">colorado.bucket.</code><code class="descname">get_bucket_g_o</code><span class="sig-paren">(</span><em>bucket</em>, <em>name=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.bucket.get_bucket_g_o" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">colorado.bucket.</code><code class="descname">get_bucket_g_o</code><span class="sig-paren">(</span><em>bucket</em>, <em>name=None</em>, <em>values=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.bucket.get_bucket_g_o" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -449,7 +540,7 @@ The meshes are drown in the same figure.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>data</strong> (<em>soma.aims.AimsTimeSurface_3_VOID | soma.aims.BucketMap_VOID.Bucket</em>) – an object or a list of objects. Object can be an aims bucket, an aims Mesh or a PyMesh</li>
+<li><strong>data</strong> (<em>soma.aims mesh/volume/bucket</em>) – an object or a list of objects. Object can be an aims bucket, an aims Mesh or a PyMesh</li>
 <li><strong>fig</strong> (<em>plotly.graph_objects.Figure</em><em>, </em><em>optional</em>) – the plotly figure, if None, one is created, defaults to None</li>
 <li><strong>labels</strong> (<em>list</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – an array of labels for the data if data is a list, defaults to None</li>
 <li><strong>shift</strong> (<em>tuple</em><em>, </em><em>optional</em>) – shift the plots in data each by (x,y,z), defaults to (0,0,0)</li>
@@ -461,6 +552,26 @@ The meshes are drown in the same figure.</p>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">plotly.graph_objects.Figure</p>
 </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colorado.get_draw_function">
+<code class="descclassname">colorado.</code><code class="descname">get_draw_function</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.get_draw_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the appropriate drawing function for obj</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> (<em>object</em>) – an object</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">ValueError</span></code> – the object is not drawable</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the drawing function</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">function</td>
 </tr>
 </tbody>
 </table>
