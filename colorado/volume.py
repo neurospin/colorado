@@ -1,13 +1,16 @@
+from numpy.lib.shape_base import _make_along_axis_idx
 from . import aims_tools
 from .bucket import get_bucket_g_o
 import numpy as np
+import plotly.graph_objects as go
 
 
-def draw_volume(aims_volume,
-                max_points=10000,
-                th_min=None, th_max=None,
-                **kwargs):
-    """Draw an aims.Volume as a scatter plot.
+
+def get_volume_g_o(volume,
+                   max_points=10000,
+                   th_min=None, th_max=None,
+                   **kwargs):
+    """Get a volume as a scatter plot.
 
     Threshold is applied if the th_min and th_max values are defined.
 
@@ -21,7 +24,7 @@ def draw_volume(aims_volume,
         plotly.grapthic_object: a gtaphic object to be added to a plotly figure
     """
 
-    avol = aims_tools.volume_to_ndarray(aims_volume)
+    avol = aims_tools.volume_to_ndarray(volume)
 
     # apply threshold
     if th_min is not None:
@@ -45,3 +48,19 @@ def draw_volume(aims_volume,
         go = get_bucket_g_o(abucket, **kwargs)
 
     return go
+
+
+def draw_volume(volume, fig=None,
+                max_points=10000,
+                th_min=None, th_max=None,
+                **kwargs):
+    """Draw a volume"""
+    if fig is None:
+        fig = go.Figure()
+    g = get_volume_g_o(
+        volume, max_points=max_points,
+        th_min=th_min, th_max=th_max,
+        **kwargs
+    )
+    fig.add_trace(g)
+    return fig
