@@ -61,7 +61,10 @@ def volume_to_ndarray(volume):
     """
     # take the firts element of the last axis instead of squeeze avoids
     # problems with volumens that have last dimension > 1.
-    return volume[:,:,:,0]
+    if not isinstance(volume, np.ndarray):
+        return volume[:,:,:,0]
+    else:
+        return volume
 
 def ndarray_to_aims_volume(ndarray):
     """Create a new volume with the data in ndarray.

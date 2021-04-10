@@ -25,6 +25,9 @@ It can be used, for example, inside jupyter notebooks.
 $ cd colorado
 $ pip install .
 ```
+
+The following steps are necessary to plot in Jupyter:
+
 3. install node and npm (takes minutes). Run the `instal_node.sh` script:
 ```
 $ ./install_node.sh
