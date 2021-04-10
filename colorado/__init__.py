@@ -81,12 +81,12 @@ def get_draw_function(obj):
         function: the drawing function
     """
     f = _drawing_functions.get(type(obj), None)
+    
     if f is None:
         is_volume = _re_match(r".*soma.aims.Volume.*", str(type(obj)))
-
-    if is_volume:
-        f = _drawing_functions[_aims.Volume]
-    else:
-        raise ValueError("I don't know how to draw {}".format(type(obj)))
+        if is_volume:
+            f = _drawing_functions[_aims.Volume]
+        else:
+            raise ValueError("I don't know how to draw {}".format(type(obj)))
 
     return f
