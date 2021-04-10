@@ -59,7 +59,9 @@ def volume_to_ndarray(volume):
     Args:
         volume (aims.volume): aims volume
     """
-    return volume[:].squeeze()
+    # take the firts element of the last axis instead of squeeze avoids
+    # problems with volumens that have last dimension > 1.
+    return volume[:,:,:,0]
 
 def ndarray_to_aims_volume(ndarray):
     """Create a new volume with the data in ndarray.
@@ -95,7 +97,7 @@ def bucket_numpy_to_volume_aims(bucket_array, pad=0):
 
     vol = aims.Volume(*v_size, dtype='int16')
     vol.fill(0)
-    avol = vol[:].squeeze()
+    avol = volume_to_ndarray(vol)
 
     for p in a:
         x, y, z = np.round(p-v_min+pad).astype(int)
@@ -121,10 +123,10 @@ def volume_to_bucket_numpy(volume):
     Returns:
         numpy.ndarray: bucket of non-zero points coordinates
     """
-    return np.argwhere(volume[:].squeeze())
+    return np.argwhere(volume_to_ndarray(volume))
 
 def volume_to_bucket_aims(volume):
-    return  np.argwhere(volume[:].squeeze())
+    return  np.argwhere(volume_to_ndarray(volume))
 
 def add_border(x, thickness, value):
     """add borders to volume (numpy)"""

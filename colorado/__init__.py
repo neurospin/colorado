@@ -44,7 +44,7 @@ def draw(data, fig=None, labels=None, shift=(0, 0, 0), **kwargs):
     shift = numpy.array(shift)
 
     for i, obj in enumerate(data):
-        f = get_draw_function(obj)
+        f = _get_draw_function(obj)
         g = f(obj, name=labels[i], shift=shift*i, **kwargs)
         fig.add_trace(g)
 
@@ -68,7 +68,7 @@ _drawing_functions = {
 }
 
 
-def get_draw_function(obj):
+def _get_draw_function(obj):
     """Get the appropriate drawing function for obj
 
     Args:
@@ -81,7 +81,7 @@ def get_draw_function(obj):
         function: the drawing function
     """
     f = _drawing_functions.get(type(obj), None)
-    
+
     if f is None:
         is_volume = _re_match(r".*soma.aims.Volume.*", str(type(obj)))
         if is_volume:
