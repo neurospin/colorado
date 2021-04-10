@@ -13,7 +13,7 @@ cld.draw([meshL, meshR])
 
 The `colorado` module is an interface between `aims` and `plotly`.
 
-The functions implemented in this module allow to plot aims objects (buckets and meshes) with plotly.
+The functions implemented in this module allow to plot aims objects (buckets volumes and meshes) with plotly.
 It can be used, for example, inside jupyter notebooks.
 
 ### Install
