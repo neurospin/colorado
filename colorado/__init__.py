@@ -1,8 +1,9 @@
 import plotly
 import numpy
 from .anatomist_tools import anatomist_snatpshot
-from .bucket import get_aims_bucket_g_o, draw_numpy_buckets
+from .bucket import get_aims_bucket_g_o, draw_numpy_bucket ,draw_numpy_buckets
 from .mesh import get_aims_mesh_g_o, draw_pyMesh, draw_meshes_in_subplots, draw_numpy_meshes
+from .volume import draw_binary_volume
 
 from .aims_tools import PyMesh, PyMeshFrame
 
@@ -34,7 +35,8 @@ def draw(data, fig=None, labels=None, shift=(0, 0, 0), **kwargs):
         _aims.AimsTimeSurface_3_VOID: get_aims_mesh_g_o,
         _aims.BucketMap_VOID.Bucket: get_aims_bucket_g_o,
         PyMesh: draw_pyMesh,
-        PyMeshFrame: draw_pyMesh
+        PyMeshFrame: draw_pyMesh,
+        _aims.Volume_S16: draw_binary_volume
     }
 
     if fig is None:
@@ -49,8 +51,11 @@ def draw(data, fig=None, labels=None, shift=(0, 0, 0), **kwargs):
     shift = numpy.array(shift)
 
     for i, obj in enumerate(data):
-        go = drawing_f[type(obj)](obj, name=labels[i], shift=shift*i, **kwargs)
-        fig.add_trace(go)
+        try:
+            go = drawing_f[type(obj)](obj, name=labels[i], shift=shift*i, **kwargs)
+            fig.add_trace(go)
+        except KeyError as e:
+            raise ValueError("I don't know how to draw {}".format(type(obj)))
 
     fig.update_layout(legend={'itemsizing': 'constant'})
 

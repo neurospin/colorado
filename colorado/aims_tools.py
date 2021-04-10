@@ -2,7 +2,7 @@ from soma import aims
 import numpy as np
 
 
-def ndarray_to_vol(ndarray):
+def ndarray_to_volume_aims(ndarray):
     """Create a new volume from the numpy ndarray.
     The array is first converted to Fortran ordering,
     as requested by the Volume constructor
@@ -15,7 +15,7 @@ def ndarray_to_vol(ndarray):
     return aims.Volume(np.asfortranarray(ndarray))
 
 
-def new_vol_like(vol):
+def new_volume_aims_like(vol):
     """Create a new empty aims.Volume with the same shape as vol
 
     :param vol: the volume data
@@ -36,7 +36,7 @@ def new_vol_like(vol):
     return new_vol
 
 
-def aims_bucket_to_ndarray(aims_bucket):
+def bucket_aims_to_ndarray(aims_bucket):
     """Transform an aims bucket into numpy array
 
     :param aims_bucket: aims bucket object
@@ -53,14 +53,39 @@ def aims_bucket_to_ndarray(aims_bucket):
     return v
 
 
-def numpy_bucket_to_aims_volume(ndarray):
-    """Create a new volume from the numpy ndarray.
+def volume_to_ndarray(volume):
+    """Transform aims volume in numpy array
+
+    Args:
+        volume (aims.volume): aims volume
+    """
+    return volume[:].squeeze()
+
+def ndarray_to_aims_volume(ndarray):
+    """Create a new volume with the data in ndarray.
+
     The array is first converted to Fortran ordering,
-    as requested by the Volume constructor"""
+    as requested by the Volume constructor."""
     return aims.Volume(np.asfortranarray(ndarray))
 
 
-def bucket_to_volume_numpy(bucket_array, pad=0):
+def bucket_numpy_to_volume_numpy(bucket_array, pad=0):
+    """Transform a bucket into a 3d boolean volume.
+    Input and output types are numpy.ndarray"""
+    a = bucket_array
+    v_max = a.max(axis=0)
+    v_min = a.min(axis=0)
+    v_size = abs(v_max - v_min) + 1 + pad*2
+
+    vol = np.zeros(v_size)
+
+    for p in a:
+        x, y, z = np.round(p-v_min+pad).astype(int)
+        vol[x, y, z] = 1
+
+    return vol
+
+def bucket_numpy_to_volume_aims(bucket_array, pad=0):
     """Transform a bucket into a 3d boolean volume.
     Input and output types are numpy.ndarray"""
     a = bucket_array
@@ -79,7 +104,14 @@ def bucket_to_volume_numpy(bucket_array, pad=0):
     return vol
 
 
-def volume_to_bucket(volume):
+def bucket_aims_to_volume_aims(aims_bucket, pad=0):
+    """Transform a bucket into a 3d boolean volume.
+    Input and output types are aims objects"""
+    abucket = bucket_aims_to_ndarray(aims_bucket)
+    return bucket_numpy_to_volume_aims(abucket, pad=pad)
+
+
+def volume_to_bucket_numpy(volume):
     """Transform a binary volume into a bucket.
     The bucket contains the coordinates of the non-zero voxels in volume.
 
@@ -91,13 +123,8 @@ def volume_to_bucket(volume):
     """
     return np.argwhere(volume[:].squeeze())
 
-
-def bucket_to_volume_aims(aims_bucket, pad=10):
-    """Transform a bucket into a 3d boolean volume.
-    Input and output types are aims objects"""
-    abucket = aims_bucket_to_ndarray(aims_bucket)
-    return numpy_bucket_to_aims_volume(bucket_to_volume_numpy(abucket, pad=pad))
-
+def volume_to_bucket_aims(volume):
+    return  np.argwhere(volume[:].squeeze())
 
 def add_border(x, thickness, value):
     """add borders to volume (numpy)"""

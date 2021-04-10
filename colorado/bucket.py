@@ -1,10 +1,10 @@
 import numpy
 from typing import Sequence
 import plotly.graph_objects as go
-from .aims_tools import aims_bucket_to_ndarray
+from .aims_tools import bucket_aims_to_ndarray
 
 
-def get_bucket_g_o(bucket, name=None, **kwargs):
+def get_bucket_g_o(bucket, name=None, values=None, **kwargs):
 
     if bucket.shape[1] != 3:
         raise ValueError(
@@ -12,19 +12,49 @@ def get_bucket_g_o(bucket, name=None, **kwargs):
 
     x, y, z = bucket.T
 
-    return go.Scatter3d(x=x, y=y, z=z, mode='markers',
-                        marker=dict(size=1, opacity=1),
-                        name=name)
+    if values is None:
+        s3d = go.Scatter3d(x=x, y=y, z=z, mode='markers',
+                           marker=dict(size=1, opacity=1),
+                           name=name)
+    else:
+        s3d = go.Scatter3d(x=x, y=y, z=z, mode='markers',
+                           marker=dict(
+                               size=1, opacity=1,
+                               color=values, colorscale='Gray'),
+                           name=name)
+
+    return s3d
 
 
 def get_aims_bucket_g_o(aims_bucket, name=None, shift=(0, 0, 0), **kwargs):
     """Plot a soma.aims Bucket"""
-    bucket = aims_bucket_to_ndarray(aims_bucket) + shift
+    bucket = bucket_aims_to_ndarray(aims_bucket) + shift
     return get_bucket_g_o(bucket, name=name, **kwargs)
 
 
+def draw_numpy_bucket(bucket):
+    """Draw one bucket from numpy array
+
+    Args:
+        bucket (numpy.ndarray, shape (N,3)): bucket
+
+    Returns:
+        plotly.graphic_objects.Figure: a plotly figure representing the bucket
+    """
+    assert bucket.shape[1] == 3,\
+        "wrong shape: expected (N,3) got {}".format(bucket.shape)
+    x, y, z = bucket.T
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter3d(x=x, y=y, z=z, mode='markers',
+                     marker=dict(size=1, opacity=1)
+                     )
+    )
+    return fig
+
+
 def draw_numpy_buckets(list_of_buckets, labels=None,
-                 transpose=True, x_shift=0, fig=None):
+                       transpose=True, x_shift=0, fig=None):
     """Draw buckets from numpy arrays.
 
     :param list_of_buckets: a list of arrays representing the buckets to plot.
