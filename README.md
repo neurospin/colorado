@@ -17,6 +17,9 @@ The functions implemented in this module allow to plot aims objects (buckets vol
 It can be used, for example, inside jupyter notebooks.
 
 ### Install
+Most probably, you want to install colorado in an environment that already has aims.
+In Brainvisa 5, you can enter the environment with the command `bv bash`. Then:
+
 1. clone this repo
 
 2. install the module:
