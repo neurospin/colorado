@@ -80,7 +80,7 @@ def bucket_numpy_to_volume_numpy(bucket_array, pad=0):
     a = bucket_array
     v_max = a.max(axis=0)
     v_min = a.min(axis=0)
-    v_size = abs(v_max - v_min) + 1 + pad*2
+    v_size = np.ceil(abs(v_max - v_min) + 1 + pad*2).astype(int)
 
     vol = np.zeros(v_size)
 

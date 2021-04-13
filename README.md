@@ -38,5 +38,5 @@ $ ./install_node.sh
 4. Install the plotly plug-in in [Jupyter notebook](https://plotly.com/python/getting-started/#jupyter-notebook-support) or [Jupyter-lab](https://plotly.com/python/getting-started/#jupyterlab-support) (instructions in the links).
 
 ### Resources
-* [simple example](https://neurospin.github.io/colorado/tutorial/tutorial.html)
+* [simple example](https://neurospin.github.io/colorado/tutorial/tutorial.html) The example data are in `docs/tutorial/data`
 * [documentation](https://neurospin.github.io/colorado/build/html/colorado.html#module-colorado)
