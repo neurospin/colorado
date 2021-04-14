@@ -7,6 +7,7 @@ from .volume import draw_volume, get_volume_g_o
 from re import match as _re_match
 
 from .aims_tools import PyMesh, PyMeshFrame
+from . import aims_tools
 
 import numpy
 
@@ -96,7 +97,8 @@ def _get_draw_function(obj):
 
     if f is None:
         is_volume = _re_match(r".*soma.aims.Volume.*", str(type(obj)))
-        if is_volume:
+        is_aims_data = _re_match(r".*soma.aims.AimsData.*", str(type(obj)))
+        if is_volume or is_aims_data:
             f = _drawing_functions[_aims.Volume_S16]
         else:
             raise ValueError("I don't know how to draw {}".format(type(obj)))
