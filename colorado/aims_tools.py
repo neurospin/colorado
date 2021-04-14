@@ -1,5 +1,6 @@
-from soma import aims
+from soma import aims, aimsalgo
 import numpy as np
+from scipy.ndimage import gaussian_filter
 
 
 def ndarray_to_volume_aims(ndarray):
@@ -62,9 +63,10 @@ def volume_to_ndarray(volume):
     # take the firts element of the last axis instead of squeeze avoids
     # problems with volumens that have last dimension > 1.
     if not isinstance(volume, np.ndarray):
-        return volume[:,:,:,0]
+        return volume[:, :, :, 0]
     else:
         return volume
+
 
 def ndarray_to_aims_volume(ndarray):
     """Create a new volume with the data in ndarray.
@@ -80,7 +82,7 @@ def bucket_numpy_to_volume_numpy(bucket_array, pad=0):
     a = bucket_array
     v_max = a.max(axis=0)
     v_min = a.min(axis=0)
-    v_size = abs(v_max - v_min) + 1 + pad*2
+    v_size = np.ceil(abs(v_max - v_min) + 1 + pad*2).astype(int)
 
     vol = np.zeros(v_size)
 
@@ -89,6 +91,7 @@ def bucket_numpy_to_volume_numpy(bucket_array, pad=0):
         vol[x, y, z] = 1
 
     return vol
+
 
 def bucket_numpy_to_volume_aims(bucket_array, pad=0):
     """Transform a bucket into a 3d boolean volume.
@@ -128,8 +131,10 @@ def volume_to_bucket_numpy(volume):
     """
     return np.argwhere(volume_to_ndarray(volume))
 
+
 def volume_to_bucket_aims(volume):
-    return  np.argwhere(volume_to_ndarray(volume))
+    return np.argwhere(volume_to_ndarray(volume))
+
 
 def add_border(x, thickness, value):
     """add borders to volume (numpy)"""
@@ -144,6 +149,142 @@ def add_border(x, thickness, value):
     x[:, :, -t:] = value
 
     return x
+
+
+def volume_to_mesh(
+        volume,
+        gaussian_blur_FWWM=0.2,
+        threshold = 0,
+        mesh_decimation_params=dict(
+            reduction_rate=99,
+            max_clearance=3,
+            max_error=1,
+            feature_angle=180),
+        mesh_smoothing_params=dict(
+            type='lowpass',
+            iterations=30,
+            rate=0.4,
+            # NOT IMPLEMENTED
+            # smoothing feature angle (in degrees) below which the vertex is not moved,
+            # only for the Laplacian algorithm, between 0 and 180 degree [default=0]
+            # laplacian_angle=0,
+            # smoothing restoring force for the Simple Spring and Polygon Spring
+            # algorithm, between 0 and 1 [default=0.2]
+            # polygonspring_force=0.2
+        )):
+    """Create a mesh from a volume.
+
+    Before calculating the mesh, the volume is first blurred with a gaussian filter and then thresholded.
+
+    Args:
+        volume (np.ndarray or aims.Volume): 3D binary image (if not binary, all vxels != 0 are set to 1)
+        gaussian_blur_FWWM (numeric) : the gaussian blur filter's full with at half maximum.
+        threshold (float in [0,1]): voxel below this value will be set to zero (1 represents the maximum of the voxel values)
+        decimation_params (dict, optional): decimation parameters.
+            reduction_rate : expected % decimation reduction rate
+            max_clearance : maximum clearance of the decimation
+            max_error : maximum error distance from the original mesh (mm)
+            feature_angle : feature angle (degrees), between 0 and 180 
+        smoothing_params (dict, optional): smoothing parameters
+            type : smoothing alorithm's type (laplacian, simplespring, polygonspring or lowpass)
+            iterations : smoothing number of iterations
+            rate : smoothing moving rate at each iteration
+
+    Returns:
+        aims Mesh: A mesh obtained from the input volume
+    """
+
+    volume = volume_to_ndarray(volume).astype(float)
+    shape = volume.shape
+
+    # gaussiam blur
+    sigma = gaussian_blur_FWWM/2.3548200450309493
+    volume = gaussian_filter(volume, sigma)
+    # normalization
+    assert(volume.max()-volume.min() != 0)
+    normalize = lambda x : (x-x.min())/(x.max()-x.min())
+    volume = normalize(volume)
+    # threshold 
+    volume = (volume > threshold).astype(int)
+    
+    # add a -1 pad required for successive steps
+    # create an aims volume to use the fillBorder function
+    aims_volume = aims.Volume_S16(*shape, 1, 1)
+    aims_volume[:, :, :, 0] = (265*volume).astype(np.int16)  # copy data
+    aims_volume.fillBorder(-1)
+
+    m = aimsalgo.Mesher()
+
+    smoothing_types = {
+        "lowpass": m.LOWPASS,
+        'laplacian': m.LAPLACIAN,
+        "simplespring": m.SIMPLESPRING,
+        "polygonspring": m.POLYGONSPRING
+    }
+
+    assert mesh_smoothing_params['type'].lower() in smoothing_types,\
+        "smoothing_param must be one of {}, got '{}'".format(
+            smoothing_types.keys(), mesh_smoothing_params['type'])
+
+    d = mesh_decimation_params
+    m.setDecimation(d['reduction_rate'], d['max_clearance'],
+                    d['max_error'], d['feature_angle'])
+
+    d = mesh_smoothing_params
+    m.setSmoothing(smoothing_types[d['type']], d['iterations'], d['rate'])
+
+    mesh = aims.AimsTimeSurface()
+    m.getBrain(aims_volume, mesh)
+
+    return mesh
+
+
+def bucket_to_mesh(
+        bucket,
+        gaussian_blur_FWWM=0.2,
+        threshold = 0,
+        decimation_params=dict(
+            reduction_rate=99,
+            max_clearance=3,
+            max_error=1,
+            feature_angle=180),
+        smoothing_params=dict(
+            type='lowpass',
+            iterations=30,
+            rate=0.4,
+            # NOT IMPLEMENTED
+            # smoothing feature angle (in degrees) below which the vertex is not moved,
+            # only for the Laplacian algorithm, between 0 and 180 degree [default=0]
+            # laplacian_angle=0,
+            # smoothing restoring force for the Simple Spring and Polygon Spring
+            # algorithm, between 0 and 1 [default=0.2]
+            # polygonspring_force=0.2
+        )):
+    """Create a mesh from a bucket
+
+    Args:
+        bucket (np.ndarray or aims.Volume): sequence of 3D points. 
+        gaussian_blur_FWWM (numeric) : the gaussian blur filter's full with at half maximum.
+        threshold (float in [0,1]): voxel below this value will be set to zero (1 represents the maximum of the voxel values)
+        decimation_params (dict, optional): decimation parameters.
+            reduction_rate : expected % decimation reduction rate
+            max_clearance : maximum clearance of the decimation
+            max_error : maximum error distance from the original mesh (mm)
+            feature_angle : feature angle (degrees), between 0 and 180 
+        smoothing_params (dict, optional): smoothing parameters
+            type : smoothing alorithm's type (laplacian, simplespring, polygonspring or lowpass)
+            iterations : smoothing number of iterations
+            rate : smoothing moving rate at each iteration
+
+    Returns:
+        aims Mesh: A mesh obtained from the input volume
+    """
+    if not isinstance(bucket, np.ndarray):
+        bucket = bucket_aims_to_ndarray(bucket)
+
+    volume = bucket_numpy_to_volume_numpy(bucket)
+
+    return volume_to_mesh(volume, gaussian_blur_FWWM, threshold, decimation_params, smoothing_params)
 
 
 class PyMesh:

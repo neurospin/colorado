@@ -1,3 +1,4 @@
+from numpy.core import numeric
 from numpy.lib.shape_base import _make_along_axis_idx
 from . import aims_tools
 from .bucket import get_bucket_g_o
@@ -7,8 +8,9 @@ import plotly.graph_objects as go
 
 
 def get_volume_g_o(volume,
-                   max_points=10000,
-                   th_min=None, th_max=None,
+                   max_points:int=10000,
+                   downsample:int=None,
+                   th_min:numeric=None, th_max:numeric=None,
                    **kwargs):
     """Get a volume as a scatter plot.
 
@@ -17,6 +19,8 @@ def get_volume_g_o(volume,
     Args:
         aims_volume (aims.Volume): the volume to plot
         max_points (int, optional): Max number of points to plot. Defaults to 10000.
+        downsample (int, optionale): donwsample the volume by this factor, defaults to None (no downsample)
+            One-every-downsample voxels are removed from the plot. The volume is not rescaled
         th_min (num, optional): lower threshold value. Defaults to None
         th_max (num, optional): higher threshold value. Defaults to None.  
 
@@ -32,8 +36,14 @@ def get_volume_g_o(volume,
     if th_max is not None:
         avol[avol > th_max] = 0
 
-    abucket = aims_tools.volume_to_bucket_numpy(avol)
+    # downsample the volume
+    if downsample is not None:
+        temp = np.zeros_like(avol)
+        temp[::downsample,::downsample,::downsample] = avol[::downsample,::downsample,::downsample]
+        avol=temp
 
+    abucket = aims_tools.volume_to_bucket_numpy(avol)
+   
     # limit number of points
     if len(abucket) > max_points:
         idx = np.random.randint(0, len(abucket), size=max_points)
@@ -52,6 +62,7 @@ def get_volume_g_o(volume,
 
 def draw_volume(volume, fig=None,
                 max_points=10000,
+                downsample=None,
                 th_min=None, th_max=None,
                 **kwargs):
     """Draw a volume"""
@@ -59,6 +70,7 @@ def draw_volume(volume, fig=None,
         fig = go.Figure()
     g = get_volume_g_o(
         volume, max_points=max_points,
+        downlsample=downsample,
         th_min=th_min, th_max=th_max,
         **kwargs
     )

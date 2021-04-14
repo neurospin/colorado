@@ -6,7 +6,7 @@ from plotly.subplots import make_subplots
 from soma import aims as _aims
 
 
-def get_mesh3d_g_o(vertices, polygons, name=None, **kwargs):
+def get_mesh3d_g_o(vertices, polygons, name=None, shift=(0,0,0), **kwargs):
     """Get an plotly graphic object from numpy arrays
 
     Args:
@@ -17,6 +17,7 @@ def get_mesh3d_g_o(vertices, polygons, name=None, **kwargs):
     Returns:
         plotly.graph_objects : a graphic pbject
     """
+    v = vertices+shift
     v = vertices.T
     p = polygons.T
     return go.Mesh3d(
