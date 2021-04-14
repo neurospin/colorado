@@ -270,6 +270,40 @@ Input and output types are numpy.ndarray</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="colorado.aims_tools.bucket_to_mesh">
+<code class="descclassname">colorado.aims_tools.</code><code class="descname">bucket_to_mesh</code><span class="sig-paren">(</span><em>bucket</em>, <em>gaussian_blur_FWWM=0.2</em>, <em>threshold=0</em>, <em>decimation_params={'feature_angle': 180</em>, <em>'max_clearance': 3</em>, <em>'max_error': 1</em>, <em>'reduction_rate': 99}</em>, <em>smoothing_params={'iterations': 30</em>, <em>'rate': 0.4</em>, <em>'type': 'lowpass'}</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.aims_tools.bucket_to_mesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a mesh from a bucket</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>bucket</strong> (<em>np.ndarray</em><em> or </em><em>aims.Volume</em>) – sequence of 3D points.</li>
+<li><strong>gaussian_blur_FWWM</strong> (<em>numeric</em>) – the gaussian blur filter’s full with at half maximum.</li>
+<li><strong>threshold</strong> (<em>float in</em><em> [</em><em>0</em><em>,</em><em>1</em><em>]</em>) – voxel below this value will be set to zero (1 represents the maximum of the voxel values)</li>
+<li><strong>decimation_params</strong> (<em>dict</em><em>, </em><em>optional</em>) – decimation parameters.
+reduction_rate : expected % decimation reduction rate
+max_clearance : maximum clearance of the decimation
+max_error : maximum error distance from the original mesh (mm)
+feature_angle : feature angle (degrees), between 0 and 180</li>
+<li><strong>smoothing_params</strong> (<em>dict</em><em>, </em><em>optional</em>) – smoothing parameters
+type : smoothing alorithm’s type (laplacian, simplespring, polygonspring or lowpass)
+iterations : smoothing number of iterations
+rate : smoothing moving rate at each iteration</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A mesh obtained from the input volume</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">aims Mesh</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
 <dt id="colorado.aims_tools.ndarray_to_aims_volume">
 <code class="descclassname">colorado.aims_tools.</code><code class="descname">ndarray_to_aims_volume</code><span class="sig-paren">(</span><em>ndarray</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.aims_tools.ndarray_to_aims_volume" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new volume with the data in ndarray.</p>
@@ -334,6 +368,41 @@ The bucket contains the coordinates of the non-zero voxels in volume.</p>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">bucket of non-zero points coordinates</td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">numpy.ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="colorado.aims_tools.volume_to_mesh">
+<code class="descclassname">colorado.aims_tools.</code><code class="descname">volume_to_mesh</code><span class="sig-paren">(</span><em>volume</em>, <em>gaussian_blur_FWWM=0.2</em>, <em>threshold=0</em>, <em>mesh_decimation_params={'feature_angle': 180</em>, <em>'max_clearance': 3</em>, <em>'max_error': 1</em>, <em>'reduction_rate': 99}</em>, <em>mesh_smoothing_params={'iterations': 30</em>, <em>'rate': 0.4</em>, <em>'type': 'lowpass'}</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.aims_tools.volume_to_mesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a mesh from a volume.</p>
+<p>Before calculating the mesh, the volume is first blurred with a gaussian filter and then thresholded.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>volume</strong> (<em>np.ndarray</em><em> or </em><em>aims.Volume</em>) – 3D binary image (if not binary, all vxels != 0 are set to 1)</li>
+<li><strong>gaussian_blur_FWWM</strong> (<em>numeric</em>) – the gaussian blur filter’s full with at half maximum.</li>
+<li><strong>threshold</strong> (<em>float in</em><em> [</em><em>0</em><em>,</em><em>1</em><em>]</em>) – voxel below this value will be set to zero (1 represents the maximum of the voxel values)</li>
+<li><strong>decimation_params</strong> (<em>dict</em><em>, </em><em>optional</em>) – decimation parameters.
+reduction_rate : expected % decimation reduction rate
+max_clearance : maximum clearance of the decimation
+max_error : maximum error distance from the original mesh (mm)
+feature_angle : feature angle (degrees), between 0 and 180</li>
+<li><strong>smoothing_params</strong> (<em>dict</em><em>, </em><em>optional</em>) – smoothing parameters
+type : smoothing alorithm’s type (laplacian, simplespring, polygonspring or lowpass)
+iterations : smoothing number of iterations
+rate : smoothing moving rate at each iteration</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A mesh obtained from the input volume</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">aims Mesh</p>
+</td>
 </tr>
 </tbody>
 </table>
@@ -422,8 +491,14 @@ Each array must be a Nx3 numpy.ndarray containing the coordinates of N points</l
 </dd></dl>
 
 <dl class="function">
+<dt id="colorado.bucket.get_aims_bucket_map_g_o">
+<code class="descclassname">colorado.bucket.</code><code class="descname">get_aims_bucket_map_g_o</code><span class="sig-paren">(</span><em>aims_bucket_map</em>, <em>name=None</em>, <em>shift=(0</em>, <em>0</em>, <em>0)</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.bucket.get_aims_bucket_map_g_o" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw a bucketMap object, which is obtained with aims.read() on .bck files</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="colorado.bucket.get_bucket_g_o">
-<code class="descclassname">colorado.bucket.</code><code class="descname">get_bucket_g_o</code><span class="sig-paren">(</span><em>bucket</em>, <em>name=None</em>, <em>values=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.bucket.get_bucket_g_o" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">colorado.bucket.</code><code class="descname">get_bucket_g_o</code><span class="sig-paren">(</span><em>bucket</em>, <em>name=None</em>, <em>marker_kwargs={'opacity': 1}</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.bucket.get_bucket_g_o" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -505,7 +580,7 @@ The meshes are drown in the same figure.</p>
 
 <dl class="function">
 <dt id="colorado.mesh.get_mesh3d_g_o">
-<code class="descclassname">colorado.mesh.</code><code class="descname">get_mesh3d_g_o</code><span class="sig-paren">(</span><em>vertices</em>, <em>polygons</em>, <em>name=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.mesh.get_mesh3d_g_o" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">colorado.mesh.</code><code class="descname">get_mesh3d_g_o</code><span class="sig-paren">(</span><em>vertices</em>, <em>polygons</em>, <em>name=None</em>, <em>shift=(0</em>, <em>0</em>, <em>0)</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.mesh.get_mesh3d_g_o" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get an plotly graphic object from numpy arrays</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -552,26 +627,6 @@ The meshes are drown in the same figure.</p>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">plotly.graph_objects.Figure</p>
 </td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="colorado.get_draw_function">
-<code class="descclassname">colorado.</code><code class="descname">get_draw_function</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="headerlink" href="#colorado.get_draw_function" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the appropriate drawing function for obj</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> (<em>object</em>) – an object</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">ValueError</span></code> – the object is not drawable</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the drawing function</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">function</td>
 </tr>
 </tbody>
 </table>
