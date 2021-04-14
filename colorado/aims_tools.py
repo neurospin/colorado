@@ -1,4 +1,4 @@
-from soma import aims
+from soma import aims, aimsalgo
 import numpy as np
 
 
@@ -62,9 +62,10 @@ def volume_to_ndarray(volume):
     # take the firts element of the last axis instead of squeeze avoids
     # problems with volumens that have last dimension > 1.
     if not isinstance(volume, np.ndarray):
-        return volume[:,:,:,0]
+        return volume[:, :, :, 0]
     else:
         return volume
+
 
 def ndarray_to_aims_volume(ndarray):
     """Create a new volume with the data in ndarray.
@@ -80,7 +81,7 @@ def bucket_numpy_to_volume_numpy(bucket_array, pad=0):
     a = bucket_array
     v_max = a.max(axis=0)
     v_min = a.min(axis=0)
-    v_size = abs(v_max - v_min) + 1 + pad*2
+    v_size = np.ceil(abs(v_max - v_min) + 1 + pad*2).astype(int)
 
     vol = np.zeros(v_size)
 
@@ -89,6 +90,7 @@ def bucket_numpy_to_volume_numpy(bucket_array, pad=0):
         vol[x, y, z] = 1
 
     return vol
+
 
 def bucket_numpy_to_volume_aims(bucket_array, pad=0):
     """Transform a bucket into a 3d boolean volume.
@@ -128,8 +130,10 @@ def volume_to_bucket_numpy(volume):
     """
     return np.argwhere(volume_to_ndarray(volume))
 
+
 def volume_to_bucket_aims(volume):
-    return  np.argwhere(volume_to_ndarray(volume))
+    return np.argwhere(volume_to_ndarray(volume))
+
 
 def add_border(x, thickness, value):
     """add borders to volume (numpy)"""
@@ -144,6 +148,43 @@ def add_border(x, thickness, value):
     x[:, :, -t:] = value
 
     return x
+
+
+def volume_to_mesh(
+        volume,
+        decimation_params=[99, 1, 0.5, 180],
+        smoothing_params=[20, 0.4]):
+    """Create a mesh from a volume"""
+    volume = volume_to_ndarray(volume)
+    shape = volume.shape
+
+    # add a -1 pad required for successive steps
+    # create an aims volume to use the fillBorder function
+    aims_volume = aims.Volume_S16(*shape, 1, 1)
+    aims_volume[:, :, :, 0] = volume[:]  # copy data
+    aims_volume.fillBorder(-1)
+
+    m = aimsalgo.Mesher()
+    m.setDecimation(*decimation_params)
+    m.setSmoothing(m.LOWPASS, *smoothing_params)
+
+    mesh = aims.AimsTimeSurface()
+    m.getBrain(aims_volume, mesh)
+
+    return mesh
+
+
+def bucket_to_mesh(
+    bucket,
+    decimation_params=[99, 1, 0.5, 180],
+    smoothing_params=[20, 0.4]):
+
+    if not isinstance(bucket, np.ndarray):
+        bucket = bucket_aims_to_ndarray(bucket)
+    
+    volume = bucket_numpy_to_volume_numpy(bucket)
+    
+    return volume_to_mesh(volume, decimation_params, smoothing_params)
 
 
 class PyMesh:
