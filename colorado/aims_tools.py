@@ -2,6 +2,9 @@ from soma import aims, aimsalgo
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
+import logging
+log = logging.getLogger(__name__)
+
 
 def ndarray_to_volume_aims(ndarray):
     """Create a new volume from the numpy ndarray.
@@ -13,7 +16,11 @@ def ndarray_to_volume_aims(ndarray):
     :return: an Aims Volume object containing the same data as ndarray
     :rtype: aims.Volume
     """
+    ndarray.reshape(*ndarray.shape, 1)
     return aims.Volume(np.asfortranarray(ndarray))
+
+
+ndarray_to_aims_volume = ndarray_to_volume_aims
 
 
 def new_volume_aims_like(vol):
@@ -55,25 +62,18 @@ def bucket_aims_to_ndarray(aims_bucket):
 
 
 def volume_to_ndarray(volume):
-    """Transform aims volume in numpy array
+    """Transform aims volume in numpy array.
+
+    Takes the first element for every dimensions > 3.
 
     Args:
         volume (aims.volume): aims volume
     """
-    # take the firts element of the last axis instead of squeeze avoids
-    # problems with volumens that have last dimension > 1.
-    if not isinstance(volume, np.ndarray):
-        return volume[:, :, :, 0]
-    else:
-        return volume
-
-
-def ndarray_to_aims_volume(ndarray):
-    """Create a new volume with the data in ndarray.
-
-    The array is first converted to Fortran ordering,
-    as requested by the Volume constructor."""
-    return aims.Volume(np.asfortranarray(ndarray))
+    # remove all dimensions except the 3 first
+    # take element 0 for the others
+    if len(volume.shape) > 3:
+        volume = volume[ tuple(3*[slice(-1)] + [0]*(len(volume.shape)-3))]
+    return volume[:]
 
 
 def bucket_numpy_to_volume_numpy(bucket_array, pad=0):
@@ -99,7 +99,7 @@ def bucket_numpy_to_volume_aims(bucket_array, pad=0):
     a = bucket_array
     v_max = a.max(axis=0)
     v_min = a.min(axis=0)
-    v_size = abs(v_max - v_min) + 1 + pad*2
+    v_size = abs(v_max - v_min) + 2 + pad*2
 
     vol = aims.Volume(*v_size, dtype='int16')
     vol.fill(0)
@@ -153,8 +153,9 @@ def add_border(x, thickness, value):
 
 def volume_to_mesh(
         volume,
-        gaussian_blur_FWWM=0.5,
-        threshold_quantile = 0.9,
+        gaussian_blur_FWWM=0,
+        threshold_quantile=0,
+        translation=(0,0,0),
         mesh_decimation_params=dict(
             reduction_rate=99,
             max_clearance=3,
@@ -198,16 +199,21 @@ def volume_to_mesh(
     shape = volume.shape
 
     # gaussiam blur
-    sigma = gaussian_blur_FWWM/2.3548200450309493
-    volume = gaussian_filter(volume, sigma)
+    if gaussian_blur_FWWM > 0:
+        sigma = gaussian_blur_FWWM/2.3548200450309493
+        volume = gaussian_filter(volume, sigma)
     # normalization
     assert(volume.max()-volume.min() != 0)
-    normalize = lambda x : (x-x.min())/(x.max()-x.min())
+    def normalize(x): return (x-x.min())/(x.max()-x.min())
     volume = normalize(volume)
-    # threshold 
-    q = np.quantile(volume[volume>0], threshold_quantile)
+    # threshold
+    if threshold_quantile > 0:
+        q = np.quantile(volume[volume > 0], threshold_quantile)
+    else:
+        q = 0
+
     volume = (volume > q).astype(int)
-    
+
     # add a -1 pad required for successive steps
     # create an aims volume to use the fillBorder function
     aims_volume = aims.Volume_S16(*shape, 1, 1)
@@ -237,13 +243,20 @@ def volume_to_mesh(
     mesh = aims.AimsTimeSurface()
     m.getBrain(aims_volume, mesh)
 
-    return mesh
+    if mesh.size() == 0:
+        raise Exception("The mesh is empty, try different the parameters")
+
+    mesh = PyMesh(mesh)
+    # add translation
+    mesh.vertices = mesh.vertices + translation
+
+    return mesh.to_aims_mesh()
 
 
 def bucket_to_mesh(
         bucket,
-        gaussian_blur_FWWM=0.5,
-        threshold_quantile = 0.9,
+        gaussian_blur_FWWM=0,
+        threshold_quantile=0,
         decimation_params=dict(
             reduction_rate=99,
             max_clearance=3,
@@ -283,15 +296,41 @@ def bucket_to_mesh(
     if not isinstance(bucket, np.ndarray):
         bucket = bucket_aims_to_ndarray(bucket)
 
+    x,y,z=bucket.T
+    translation = (x.min(),y.min(),z.min())
+
     volume = bucket_numpy_to_volume_numpy(bucket)
 
-    return volume_to_mesh(volume, gaussian_blur_FWWM, threshold_quantile, decimation_params, smoothing_params)
+    if gaussian_blur_FWWM == 0 and threshold_quantile != 0:
+        log.warn("Thresholding is automatically disabled with smoothing FWHM=0. To remove this message set threshold_quantile=0")
+        threshold_quantile = 0
+
+    return volume_to_mesh(volume, gaussian_blur_FWWM, threshold_quantile, translation, decimation_params, smoothing_params)
 
 # THE OLD IMPLEMENTATION WITH COMMAND LINE TOOLS
 # def build_mesh(volume,
-#     aimsThreshold = 0,  # aimsThreshold param, smoothing threshold  
-#     smoothingFactor = 2.0,  # the smoothing factor used before making MA mesh in step composeSpamMesh 
+#     aimsThreshold = 0,  # aimsThreshold param, smoothing threshold
+#     smoothingFactor = 2.0,  # the smoothing factor used before making MA mesh in step composeSpamMesh
 #     ):
+
+#     tempfile.mkdtemp()
+
+#     v = volume
+#     # normalize and transform to int16
+#     v = ((v - v.min())/(v.max()-v.min())*256).astype(np.float)
+
+#     aims.write(cld.aims_tools.ndarray_to_aims_volume(v), f"{dirpath}/temp.ima")
+#     gaussianSmoothCmd = f'AimsGaussianSmoothing -i {dirpath}/temp.ima  -o {dirpath}/temp_smooth.ima -x {smoothingFactor} -y {smoothingFactor} -z {smoothingFactor}'
+#     thresholdCmd = f"AimsThreshold -i {dirpath}/temp_smooth.ima -o {dirpath}/temp_threshold.ima -b -t {aimsThreshold}"
+#     meshCmd = f'AimsMesh -i {dirpath}/temp_threshold.ima -o {dirpath}/temp.mesh --deciMaxError 0.5 --deciMaxClearance 1 --smooth --smoothIt 20'
+#     zcatCmd = f'AimsZCat  -i  {dirpath}/temp*.mesh -o {dirpath}/combined.mesh'
+
+#     sh(gaussianSmoothCmd)
+#     sh(thresholdCmd)
+#     sh(meshCmd)
+#     sh(zcatCmd)
+
+#     return aims.read("tmp/combined.mesh")
 
 #     tempfile.mkdtemp()
     
@@ -368,7 +407,10 @@ class PyMesh:
         self.frames.append(frame)
 
     def __getitem__(self, i):
-        return self.frames[i]
+        try:
+            return self.frames[i]
+        except IndexError:
+            raise IndexError("this mesh is empty")
 
     def __setitem__(self, i, v):
         self.frames[i] = v
