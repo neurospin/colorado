@@ -332,6 +332,24 @@ def bucket_to_mesh(
 
 #     return aims.read("tmp/combined.mesh")
 
+#     tempfile.mkdtemp()
+    
+#     v = volume
+#     # normalize and transform to int16
+#     v = ((v - v.min())/(v.max()-v.min())*256).astype(np.float)
+
+#     aims.write(cld.aims_tools.ndarray_to_aims_volume(v), f"{dirpath}/temp.ima")
+#     gaussianSmoothCmd = f'AimsGaussianSmoothing -i {dirpath}/temp.ima  -o {dirpath}/temp_smooth.ima -x {smoothingFactor} -y {smoothingFactor} -z {smoothingFactor}'
+#     thresholdCmd = f"AimsThreshold -i {dirpath}/temp_smooth.ima -o {dirpath}/temp_threshold.ima -b -t {aimsThreshold}"
+#     meshCmd = f'AimsMesh -i {dirpath}/temp_threshold.ima -o {dirpath}/temp.mesh --deciMaxError 0.5 --deciMaxClearance 1 --smooth --smoothIt 20'
+#     zcatCmd = f'AimsZCat  -i  {dirpath}/temp*.mesh -o {dirpath}/combined.mesh'
+
+#     sh(gaussianSmoothCmd)
+#     sh(thresholdCmd)
+#     sh(meshCmd)
+#     sh(zcatCmd)
+
+#     return aims.read("tmp/combined.mesh")
 
 class PyMesh:
     def __init__(self, aims_mesh=None):

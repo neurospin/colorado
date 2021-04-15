@@ -39,11 +39,13 @@ def draw(data, fig=None, labels=None, shift=(0, 0, 0), draw_function=None, draw_
     shift = numpy.array(shift)
 
     for i, (name, obj) in enumerate(data.items()):
+
         if draw_function is None:
             f = _get_draw_function(obj)
         else:
             f = draw_function
         trace = f(obj, name=name, shift=shift*i, **draw_f_args, **kwargs)
+
 
         if isinstance(trace, plotly.basedatatypes.BaseTraceHierarchyType):
             fig.add_trace(trace)
