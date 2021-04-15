@@ -3,7 +3,7 @@ import numpy
 from .anatomist_tools import anatomist_snatpshot
 from .bucket import get_aims_bucket_g_o, draw_numpy_bucket, draw_numpy_buckets, get_aims_bucket_map_g_o
 from .mesh import get_aims_mesh_g_o, draw_pyMesh, draw_meshes_in_subplots, draw_numpy_meshes
-from .volume import draw_volume, get_volume_g_o
+from .volume import draw_volume, get_volume_g_o, draw_volumes
 from re import match as _re_match
 
 from .aims_tools import PyMesh, PyMeshFrame
@@ -14,7 +14,7 @@ import numpy
 from soma import aims as _aims
 
 
-def draw(data, fig=None, labels=None, shift=(0, 0, 0), **kwargs):
+def draw(data, fig=None, labels=None, shift=(0, 0, 0), draw_function=None, draw_f_args=dict(), **kwargs):
     """Draw objects with plotly
 
     :param data: an object or a list of objects. Object can be an aims bucket, an aims Mesh or a PyMesh
@@ -30,7 +30,11 @@ def draw(data, fig=None, labels=None, shift=(0, 0, 0), **kwargs):
     """
 
     # check if the object is iterable
-    if not isinstance(data, list):
+    if isinstance(data, dict):
+        # if it is a dictionary, use keys as labels
+        labels = list(data.keys())
+        data = list(data.values())
+    elif not isinstance(data, list):
         data = [data]
 
     if fig is None:
@@ -45,8 +49,11 @@ def draw(data, fig=None, labels=None, shift=(0, 0, 0), **kwargs):
     shift = numpy.array(shift)
 
     for i, obj in enumerate(data):
-        f = _get_draw_function(obj)
-        trace = f(obj, name=labels[i], shift=shift*i, **kwargs)
+        if draw_function is None:
+            f = _get_draw_function(obj)
+        else:
+            f = draw_function
+        trace = f(obj, name=labels[i], shift=shift*i, **draw_f_args, **kwargs)
 
         if isinstance(trace, plotly.basedatatypes.BaseTraceHierarchyType):
             fig.add_trace(trace)
@@ -57,7 +64,7 @@ def draw(data, fig=None, labels=None, shift=(0, 0, 0), **kwargs):
                 for tr in trace:
                    fig.add_trace(tr) 
             except:
-                raise
+                # raise
                 raise ValueError("Dwawind Error")
 
     fig.update_layout(legend={'itemsizing': 'constant'})
