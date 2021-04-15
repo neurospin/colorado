@@ -4,12 +4,13 @@ import plotly.graph_objects as go
 from .aims_tools import bucket_aims_to_ndarray
 
 
-def get_bucket_g_o(bucket, name=None, marker_kwargs=dict(opacity=1), **kwargs):
+def get_bucket_g_o(bucket, name=None, marker_kwargs=dict(opacity=1), shift=(0,0,0), **kwargs):
 
     if bucket.shape[1] != 3:
         raise ValueError(
             "The shape array is not correct: expected (N,3), got{}".format(bucket.shape))
 
+    bucket = bucket+shift
     x, y, z = bucket.T
 
     s3d = go.Scatter3d(
@@ -58,13 +59,13 @@ def draw_numpy_bucket(bucket):
     return fig
 
 
-def draw_numpy_buckets(list_of_buckets, labels=None,
-                       transpose=True, x_shift=0, fig=None):
+def draw_numpy_buckets(buckets, labels=None,
+                       transpose=True, shift=(0,0,0), fig=None):
     """Draw buckets from numpy arrays.
 
-    :param list_of_buckets: a list of arrays representing the buckets to plot.
+    :param buckets: a list of arrays representing the buckets to plot.
         Each array must be a Nx3 numpy.ndarray containing the coordinates of N points
-    :type list_of_buckets: Sequence[numpy.ndarray]
+    :type buckets: Sequence[numpy.ndarray]
     :param transpose: for plot reasons, transpose each bucket array if True, defaults to True
     :type transpose: bool, optional
     :param x_shift: Amount of x shift to add to each sulcus, defaults to 0
@@ -74,16 +75,17 @@ def draw_numpy_buckets(list_of_buckets, labels=None,
 
     gos = []
 
-    if labels is None:
-        labels = [None] * len(list_of_buckets)
-
-    assert len(labels) == len(
-        list_of_buckets), "ERROR: len(labels) != len(list_of_sulci)"
+    if not isinstance(buckets, dict):
+        labels = range(len(buckets))
+        buckets = dict(zip(labels,buckets))
 
     if fig is None:
         fig = go.Figure()
 
-    for i, sulcus in enumerate(list_of_buckets):
+    shift = numpy.array(shift)
+
+    for i, (name, sulcus) in enumerate(buckets.items()):
+        sulcus = sulcus+shift*i
 
         if transpose:
             sulcus = sulcus.T
@@ -103,10 +105,11 @@ def draw_numpy_buckets(list_of_buckets, labels=None,
 
         # do not set opacity<1 because of a plotpy issue:
         # https://github.com/plotly/plotly.js/issues/2717
+
         gos.append(
-            go.Scatter3d(x=x+x_shift*i, y=y, z=z, mode='markers',
+            go.Scatter3d(x=x, y=y, z=z, mode='markers',
                          marker=dict(size=1, opacity=1),
-                         name=labels[i])
+                         name=name)
         )
 
     for g in gos:

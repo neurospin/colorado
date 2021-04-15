@@ -11,6 +11,7 @@ def get_volume_g_o(volume,
                    max_points:int=10000,
                    downsample:int=None,
                    th_min:numeric=None, th_max:numeric=None,
+                   shift=(0,0,0),
                    **kwargs):
     """Get a volume as a scatter plot.
 
@@ -28,7 +29,7 @@ def get_volume_g_o(volume,
         plotly.grapthic_object: a gtaphic object to be added to a plotly figure
     """
 
-    avol = aims_tools.volume_to_ndarray(volume)
+    avol = aims_tools.volume_to_ndarray(volume).copy()
 
     # apply threshold
     if th_min is not None:
@@ -53,9 +54,9 @@ def get_volume_g_o(volume,
     if kwargs.get('use_values', None):
         x, y, z = abucket.T
         values = avol[x, y, z]
-        go = get_bucket_g_o(abucket, values=values, **kwargs)
+        go = get_bucket_g_o(abucket, values=values, shift=shift, **kwargs)
     else:
-        go = get_bucket_g_o(abucket, **kwargs)
+        go = get_bucket_g_o(abucket, shift=shift, **kwargs)
 
     return go
 
@@ -75,4 +76,33 @@ def draw_volume(volume, fig=None,
         **kwargs
     )
     fig.add_trace(g)
+    return fig
+
+def draw_volumes(volumes, fig=None,
+                max_points=10000,
+                downsample=None,
+                th_min=None, th_max=None,
+                labels=None, shift=(0,0,0),
+                **kwargs):
+    """Draw volumes"""
+    if fig is None:
+        fig = go.Figure()
+
+    if not isinstance(volumes, dict):
+        labels = range(len(volumes))
+        volumes = dict(zip(labels,volumes))
+
+    shift=np.array(shift)
+
+    for i, (name, volume) in enumerate(volumes.items()):
+        g = get_volume_g_o(
+            volume, max_points=max_points,
+            downlsample=downsample,
+            th_min=th_min, th_max=th_max,
+            name=name, shift=shift*i,
+            **kwargs
+        )
+        fig.add_trace(g)
+
+    fig.update_layout(legend={'itemsizing': 'constant'})
     return fig

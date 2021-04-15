@@ -153,8 +153,8 @@ def add_border(x, thickness, value):
 
 def volume_to_mesh(
         volume,
-        gaussian_blur_FWWM=0.2,
-        threshold = 0,
+        gaussian_blur_FWWM=0.5,
+        threshold_quantile = 0.9,
         mesh_decimation_params=dict(
             reduction_rate=99,
             max_clearance=3,
@@ -178,8 +178,8 @@ def volume_to_mesh(
 
     Args:
         volume (np.ndarray or aims.Volume): 3D binary image (if not binary, all vxels != 0 are set to 1)
-        gaussian_blur_FWWM (numeric) : the gaussian blur filter's full with at half maximum.
-        threshold (float in [0,1]): voxel below this value will be set to zero (1 represents the maximum of the voxel values)
+        gaussian_blur_FWWM (numeric) : the gaussian blur filter's full width at half maximum.
+        threshold_quantile (float in [0,1]): voxels below this quantile will be set to zero.
         decimation_params (dict, optional): decimation parameters.
             reduction_rate : expected % decimation reduction rate
             max_clearance : maximum clearance of the decimation
@@ -205,7 +205,8 @@ def volume_to_mesh(
     normalize = lambda x : (x-x.min())/(x.max()-x.min())
     volume = normalize(volume)
     # threshold 
-    volume = (volume > threshold).astype(int)
+    q = np.quantile(volume[volume>0], threshold_quantile)
+    volume = (volume > q).astype(int)
     
     # add a -1 pad required for successive steps
     # create an aims volume to use the fillBorder function
@@ -241,8 +242,8 @@ def volume_to_mesh(
 
 def bucket_to_mesh(
         bucket,
-        gaussian_blur_FWWM=0.2,
-        threshold = 0,
+        gaussian_blur_FWWM=0.5,
+        threshold_quantile = 0.9,
         decimation_params=dict(
             reduction_rate=99,
             max_clearance=3,
@@ -265,7 +266,7 @@ def bucket_to_mesh(
     Args:
         bucket (np.ndarray or aims.Volume): sequence of 3D points. 
         gaussian_blur_FWWM (numeric) : the gaussian blur filter's full with at half maximum.
-        threshold (float in [0,1]): voxel below this value will be set to zero (1 represents the maximum of the voxel values)
+        threshold_quantile (float in [0,1]): voxels below this quantile will be set to zero.
         decimation_params (dict, optional): decimation parameters.
             reduction_rate : expected % decimation reduction rate
             max_clearance : maximum clearance of the decimation
@@ -284,8 +285,32 @@ def bucket_to_mesh(
 
     volume = bucket_numpy_to_volume_numpy(bucket)
 
-    return volume_to_mesh(volume, gaussian_blur_FWWM, threshold, decimation_params, smoothing_params)
+    return volume_to_mesh(volume, gaussian_blur_FWWM, threshold_quantile, decimation_params, smoothing_params)
 
+# THE OLD IMPLEMENTATION WITH COMMAND LINE TOOLS
+# def build_mesh(volume,
+#     aimsThreshold = 0,  # aimsThreshold param, smoothing threshold  
+#     smoothingFactor = 2.0,  # the smoothing factor used before making MA mesh in step composeSpamMesh 
+#     ):
+
+#     tempfile.mkdtemp()
+    
+#     v = volume
+#     # normalize and transform to int16
+#     v = ((v - v.min())/(v.max()-v.min())*256).astype(np.float)
+
+#     aims.write(cld.aims_tools.ndarray_to_aims_volume(v), f"{dirpath}/temp.ima")
+#     gaussianSmoothCmd = f'AimsGaussianSmoothing -i {dirpath}/temp.ima  -o {dirpath}/temp_smooth.ima -x {smoothingFactor} -y {smoothingFactor} -z {smoothingFactor}'
+#     thresholdCmd = f"AimsThreshold -i {dirpath}/temp_smooth.ima -o {dirpath}/temp_threshold.ima -b -t {aimsThreshold}"
+#     meshCmd = f'AimsMesh -i {dirpath}/temp_threshold.ima -o {dirpath}/temp.mesh --deciMaxError 0.5 --deciMaxClearance 1 --smooth --smoothIt 20'
+#     zcatCmd = f'AimsZCat  -i  {dirpath}/temp*.mesh -o {dirpath}/combined.mesh'
+
+#     sh(gaussianSmoothCmd)
+#     sh(thresholdCmd)
+#     sh(meshCmd)
+#     sh(zcatCmd)
+
+#     return aims.read("tmp/combined.mesh")
 
 class PyMesh:
     def __init__(self, aims_mesh=None):
