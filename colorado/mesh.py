@@ -21,7 +21,7 @@ def get_mesh3d_g_o(vertices, polygons, name=None, shift=(0,0,0), **kwargs):
     v = vertices.T
     p = polygons.T
     return go.Mesh3d(
-        x=v[0], y=v[1], z=v[2].max()-v[2],
+        x=v[0], y=v[1], z=v[2],
         i=p[0], j=p[1], k=p[2],
         opacity=1,
         color='rgb(255,200,200)',
@@ -40,10 +40,10 @@ def get_aims_mesh_g_o(mesh, name=None, shift=(0, 0, 0), **kwargs):
             # it was an aims mesh
             mesh = PyMesh(mesh)[0]
 
-        vertices = mesh.vertices + shift
+        vertices = mesh.vertices
         polygons = mesh.polygons
 
-    return get_mesh3d_g_o(vertices, polygons, name=name, **kwargs)
+    return get_mesh3d_g_o(vertices, polygons, name=name, shift=shift, **kwargs)
 
 
 def draw_meshes_in_subplots(mesh_list, cols=3):
@@ -81,7 +81,7 @@ def draw_meshes_in_subplots(mesh_list, cols=3):
     return fig
 
 
-def draw_pyMesh(mesh, **kwargs):
+def draw_pyMesh(mesh, shift=(0,0,0), **kwargs):
     """Draw a PyMesh object
 
     Args:
@@ -90,7 +90,7 @@ def draw_pyMesh(mesh, **kwargs):
     Returns:
         plotly.graphic_object: graphic object
     """
-    return get_mesh3d_g_o(mesh.vertices, mesh.polygons, **kwargs)
+    return get_mesh3d_g_o(mesh.vertices + shift, mesh.polygons, **kwargs)
 
 
 def draw_numpy_meshes(list_of_vertices, list_of_polygons, labels=None):

@@ -1,3 +1,4 @@
+from numpy.lib.arraysetops import isin
 import plotly
 import numpy
 from .anatomist_tools import anatomist_snatpshot
@@ -29,31 +30,20 @@ def draw(data, fig=None, labels=None, shift=(0, 0, 0), draw_function=None, draw_
     :rtype: plotly.graph_objects.Figure
     """
 
-    # check if the object is iterable
-    if isinstance(data, dict):
-        # if it is a dictionary, use keys as labels
-        labels = list(data.keys())
-        data = list(data.values())
-    elif not isinstance(data, list):
-        data = [data]
+    # create a labeled dict of objects to draw
+    data = _data_to_dict(data, labels)
 
     if fig is None:
         fig = plotly.graph_objects.Figure()
 
-    if labels is None:
-        labels = [None]*len(data)
-
-    if isinstance(data, list):
-        assert len(data) == len(labels)
-
     shift = numpy.array(shift)
 
-    for i, obj in enumerate(data):
+    for i, (name, obj) in enumerate(data.items()):
         if draw_function is None:
             f = _get_draw_function(obj)
         else:
             f = draw_function
-        trace = f(obj, name=labels[i], shift=shift*i, **draw_f_args, **kwargs)
+        trace = f(obj, name=name, shift=shift*i, **draw_f_args, **kwargs)
 
         if isinstance(trace, plotly.basedatatypes.BaseTraceHierarchyType):
             fig.add_trace(trace)
@@ -65,12 +55,50 @@ def draw(data, fig=None, labels=None, shift=(0, 0, 0), draw_function=None, draw_
                    fig.add_trace(tr) 
             except:
                 # raise
-                raise ValueError("Dwawind Error")
+                raise ValueError("Drawing Error")
 
     fig.update_layout(legend={'itemsizing': 'constant'})
 
     return fig
 
+
+def _data_to_dict(data, labels):
+     # check if the object is iterable
+    if not isinstance(data, dict):
+        # Check for instance of list instead iterability because
+        # aims Volumes is an iterable
+        if not isinstance(data, list): 
+            data = [data]
+        if labels is None:
+            labels = ["trace {}".format(x) for x in range(len(data))]
+        assert len(data) == len(labels)
+        data = dict(zip(labels, data))
+
+    return data
+
+
+def draw_as_mesh(data, gaussian_blur_FWWM=0, threshold_quantile=0, labels=None, shift=(0, 0, 0), **kwargs):
+
+    # create a labeled dict of objects to draw
+    data = _data_to_dict(data, labels)
+
+    for name, obj in data.items():
+        if isinstance(data, numpy.ndarray):
+            raise ValueError(
+        "numpy object are ambiguous. use colorado.aims_tools functions to convert them into aims objects")
+        elif _is_aims_volume(obj):
+            data[name] = aims_tools.volume_to_mesh(obj, gaussian_blur_FWWM=gaussian_blur_FWWM, threshold_quantile=threshold_quantile)
+        elif isinstance(obj, _aims.BucketMap_VOID.Bucket):
+            data[name] = aims_tools.bucket_to_mesh(obj, gaussian_blur_FWWM=gaussian_blur_FWWM, threshold_quantile=threshold_quantile)
+        elif isinstance(obj, _aims.AimsTimeSurface_3_VOID) or isinstance(obj, PyMesh):
+            # it's already a mesh
+            pass
+        else:
+            # it's something else
+            raise ValueError("Oups, I can't convert a {} object into aims mesh".format(type(obj)))
+
+    return draw(data, shift=shift, **kwargs)
+        
 
 def _raise_numpy_error(obj, name, shift, **kwargs):
     raise ValueError(
@@ -87,6 +115,8 @@ _drawing_functions = {
     _aims.BucketMap_VOID: get_aims_bucket_map_g_o
 }
 
+def _is_aims_volume(obj):
+    return _re_match(r".*soma.aims.Volume.*", str(type(obj))) or _re_match(r".*soma.aims.AimsData.*", str(type(obj)))
 
 def _get_draw_function(obj):
     """Get the appropriate drawing function for obj
@@ -103,9 +133,7 @@ def _get_draw_function(obj):
     f = _drawing_functions.get(type(obj), None)
 
     if f is None:
-        is_volume = _re_match(r".*soma.aims.Volume.*", str(type(obj)))
-        is_aims_data = _re_match(r".*soma.aims.AimsData.*", str(type(obj)))
-        if is_volume or is_aims_data:
+        if _is_aims_volume(obj):
             f = _drawing_functions[_aims.Volume_S16]
         else:
             raise ValueError("I don't know how to draw {}".format(type(obj)))
