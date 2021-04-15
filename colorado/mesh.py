@@ -17,8 +17,8 @@ def get_mesh3d_g_o(vertices, polygons, name=None, shift=(0,0,0), **kwargs):
     Returns:
         plotly.graph_objects : a graphic pbject
     """
-    v = vertices+shift
-    v = vertices.T
+    v = vertices + shift
+    v = v.T
     p = polygons.T
     return go.Mesh3d(
         x=v[0], y=v[1], z=v[2],
@@ -90,7 +90,7 @@ def draw_pyMesh(mesh, shift=(0,0,0), **kwargs):
     Returns:
         plotly.graphic_object: graphic object
     """
-    return get_mesh3d_g_o(mesh.vertices + shift, mesh.polygons, **kwargs)
+    return get_mesh3d_g_o(mesh.vertices, mesh.polygons,  shift=shift, **kwargs)
 
 
 def draw_numpy_meshes(list_of_vertices, list_of_polygons, labels=None):
