@@ -1,3 +1,4 @@
+# from scipy.ndimage.measurements import minimum
 from soma import aims, aimsalgo
 import numpy as np
 from scipy.ndimage import gaussian_filter
@@ -71,23 +72,42 @@ def volume_to_ndarray(volume):
     """
     # remove all dimensions except the 3 first
     # take element 0 for the others
-    if len(volume.shape) > 3:
-        volume = volume[ tuple(3*[slice(-1)] + [0]*(len(volume.shape)-3))]
+    try:
+        # aims VOlume and numpy array have shape
+        if len(volume.shape) > 3:
+            volume = volume[ tuple(3*[slice(0,None)] + [0]*(len(volume.shape)-3))]
+    except AttributeError:
+        # aims.AimsData does not have shape
+        # but it is always 3D
+        volume = volume[:,:,:,0]
     return volume[:]
 
 
-def bucket_numpy_to_volume_numpy(bucket_array, pad=0):
+def _volume_size_from_numpy_bucket(bucket_array, pad):
+    a = bucket_array
+    # the minimum and maximum here make sure that the voxels
+    # are in the absolute coordinates system of the bucket
+    # i.e. the volume always include the bucket origin.
+    # This is the behaviour of AIMS
+    # this also makes the volume bigger and full with zeros
+    v_max = np.maximum((0,0,0),a.max(axis=0))
+    v_min = np.minimum((0,0,0),a.min(axis=0))
+    v_size = np.ceil(abs(v_max - v_min) + 1 + pad*2).astype(int)
+    return v_size, v_min
+
+def _point_to_voxel_indices(point):
+    return np.round(point).astype(int)
+
+def bucket_numpy_to_volume_numpy(bucket_array, pad=0, side=None):
     """Transform a bucket into a 3d boolean volume.
     Input and output types are numpy.ndarray"""
-    a = bucket_array
-    v_max = a.max(axis=0)
-    v_min = a.min(axis=0)
-    v_size = np.ceil(abs(v_max - v_min) + 1 + pad*2).astype(int)
+    
+    v_size, v_min = _volume_size_from_numpy_bucket(bucket_array, pad)
 
-    vol = np.zeros(v_size)
+    vol = np.zeros(np.array(v_size))
 
-    for p in a:
-        x, y, z = np.round(p-v_min+pad).astype(int)
+    for p in bucket_array:
+        x, y, z = _point_to_voxel_indices((p-v_min)+pad)
         vol[x, y, z] = 1
 
     return vol
@@ -96,17 +116,15 @@ def bucket_numpy_to_volume_numpy(bucket_array, pad=0):
 def bucket_numpy_to_volume_aims(bucket_array, pad=0):
     """Transform a bucket into a 3d boolean volume.
     Input and output types are numpy.ndarray"""
-    a = bucket_array
-    v_max = a.max(axis=0)
-    v_min = a.min(axis=0)
-    v_size = abs(v_max - v_min) + 2 + pad*2
+
+    v_size, v_min = _volume_size_from_numpy_bucket(bucket_array, pad)
 
     vol = aims.Volume(*v_size, dtype='int16')
     vol.fill(0)
     avol = volume_to_ndarray(vol)
 
-    for p in a:
-        x, y, z = np.round(p-v_min+pad).astype(int)
+    for p in bucket_array:
+        x, y, z = _point_to_voxel_indices(p-v_min+pad)
         avol[x, y, z] = 1
 
     return vol

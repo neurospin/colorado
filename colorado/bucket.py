@@ -76,7 +76,8 @@ def draw_numpy_buckets(buckets, labels=None,
     gos = []
 
     if not isinstance(buckets, dict):
-        labels = range(len(buckets))
+        if labels is None:
+            labels = range(len(buckets))
         buckets = dict(zip(labels,buckets))
 
     if fig is None:
