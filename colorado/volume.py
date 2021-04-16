@@ -6,12 +6,11 @@ import numpy as np
 import plotly.graph_objects as go
 
 
-
 def get_volume_g_o(volume,
-                   max_points:int=10000,
-                   downsample:int=None,
-                   th_min:numeric=None, th_max:numeric=None,
-                   shift=(0,0,0),
+                   max_points: int = 10000,
+                   downsample: int = None,
+                   th_min: numeric = None, th_max: numeric = None,
+                   shift=(0, 0, 0),
                    **kwargs):
     """Get a volume as a scatter plot.
 
@@ -28,7 +27,6 @@ def get_volume_g_o(volume,
     Returns:
         plotly.grapthic_object: a gtaphic object to be added to a plotly figure
     """
-
     avol = aims_tools.volume_to_ndarray(volume).copy()
 
     # apply threshold
@@ -40,11 +38,12 @@ def get_volume_g_o(volume,
     # downsample the volume
     if downsample is not None:
         temp = np.zeros_like(avol)
-        temp[::downsample,::downsample,::downsample] = avol[::downsample,::downsample,::downsample]
-        avol=temp
+        temp[::downsample, ::downsample,
+             ::downsample] = avol[::downsample, ::downsample, ::downsample]
+        avol = temp
 
     abucket = aims_tools.volume_to_bucket_numpy(avol)
-   
+
     # limit number of points
     if len(abucket) > max_points:
         idx = np.random.randint(0, len(abucket), size=max_points)
@@ -78,21 +77,22 @@ def draw_volume(volume, fig=None,
     fig.add_trace(g)
     return fig
 
+
 def draw_volumes(volumes, fig=None,
-                max_points=10000,
-                downsample=None,
-                th_min=None, th_max=None,
-                labels=None, shift=(0,0,0),
-                **kwargs):
+                 max_points=10000,
+                 downsample=None,
+                 th_min=None, th_max=None,
+                 labels=None, shift=(0, 0, 0),
+                 **kwargs):
     """Draw volumes"""
     if fig is None:
         fig = go.Figure()
 
     if not isinstance(volumes, dict):
         labels = range(len(volumes))
-        volumes = dict(zip(labels,volumes))
+        volumes = dict(zip(labels, volumes))
 
-    shift=np.array(shift)
+    shift = np.array(shift)
 
     for i, (name, volume) in enumerate(volumes.items()):
         g = get_volume_g_o(

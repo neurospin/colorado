@@ -46,7 +46,6 @@ def draw(data, fig=None, labels=None, shift=(0, 0, 0), draw_function=None, draw_
             f = draw_function
         trace = f(obj, name=name, shift=shift*i, **draw_f_args, **kwargs)
 
-
         if isinstance(trace, plotly.basedatatypes.BaseTraceHierarchyType):
             fig.add_trace(trace)
         else:
@@ -54,7 +53,7 @@ def draw(data, fig=None, labels=None, shift=(0, 0, 0), draw_function=None, draw_
             try:
                 trace = iter(trace)
                 for tr in trace:
-                   fig.add_trace(tr) 
+                    fig.add_trace(tr)
             except:
                 # raise
                 raise ValueError("Drawing Error")
@@ -65,11 +64,11 @@ def draw(data, fig=None, labels=None, shift=(0, 0, 0), draw_function=None, draw_
 
 
 def _data_to_dict(data, labels):
-     # check if the object is iterable
+    # check if the object is iterable
     if not isinstance(data, dict):
         # Check for instance of list instead iterability because
         # aims Volumes is an iterable
-        if not isinstance(data, list): 
+        if not isinstance(data, list):
             data = [data]
         if labels is None:
             labels = ["trace {}".format(x) for x in range(len(data))]
@@ -87,20 +86,23 @@ def draw_as_mesh(data, gaussian_blur_FWWM=0, threshold_quantile=0, labels=None, 
     for name, obj in data.items():
         if isinstance(data, numpy.ndarray):
             raise ValueError(
-        "numpy object are ambiguous. use colorado.aims_tools functions to convert them into aims objects")
+                "numpy object are ambiguous. use colorado.aims_tools functions to convert them into aims objects")
         elif _is_aims_volume(obj):
-            data[name] = aims_tools.volume_to_mesh(obj, gaussian_blur_FWWM=gaussian_blur_FWWM, threshold_quantile=threshold_quantile)
+            data[name] = aims_tools.volume_to_mesh(
+                obj, gaussian_blur_FWWM=gaussian_blur_FWWM, threshold_quantile=threshold_quantile)
         elif isinstance(obj, _aims.BucketMap_VOID.Bucket):
-            data[name] = aims_tools.bucket_to_mesh(obj, gaussian_blur_FWWM=gaussian_blur_FWWM, threshold_quantile=threshold_quantile)
+            data[name] = aims_tools.bucket_to_mesh(
+                obj, gaussian_blur_FWWM=gaussian_blur_FWWM, threshold_quantile=threshold_quantile)
         elif isinstance(obj, _aims.AimsTimeSurface_3_VOID) or isinstance(obj, PyMesh):
             # it's already a mesh
             pass
         else:
             # it's something else
-            raise ValueError("Oups, I can't convert a {} object into aims mesh".format(type(obj)))
+            raise ValueError(
+                "Oups, I can't convert a {} object into aims mesh".format(type(obj)))
 
     return draw(data, shift=shift, **kwargs)
-        
+
 
 def _raise_numpy_error(obj, name, shift, **kwargs):
     raise ValueError(
@@ -117,8 +119,10 @@ _drawing_functions = {
     _aims.BucketMap_VOID: get_aims_bucket_map_g_o
 }
 
+
 def _is_aims_volume(obj):
     return _re_match(r".*soma.aims.Volume.*", str(type(obj))) or _re_match(r".*soma.aims.AimsData.*", str(type(obj)))
+
 
 def _get_draw_function(obj):
     """Get the appropriate drawing function for obj

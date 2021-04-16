@@ -75,11 +75,12 @@ def volume_to_ndarray(volume):
     try:
         # aims VOlume and numpy array have shape
         if len(volume.shape) > 3:
-            volume = volume[ tuple(3*[slice(0,None)] + [0]*(len(volume.shape)-3))]
+            volume = volume[tuple(3*[slice(0, None)] + [0]
+                                  * (len(volume.shape)-3))]
     except AttributeError:
         # aims.AimsData does not have shape
         # but it is always 3D
-        volume = volume[:,:,:,0]
+        volume = volume[:, :, :, 0]
     return volume[:]
 
 
@@ -90,18 +91,28 @@ def _volume_size_from_numpy_bucket(bucket_array, pad):
     # i.e. the volume always include the bucket origin.
     # This is the behaviour of AIMS
     # this also makes the volume bigger and full with zeros
-    v_max = np.maximum((0,0,0),a.max(axis=0))
-    v_min = np.minimum((0,0,0),a.min(axis=0))
+    v_max = np.maximum((0, 0, 0), a.max(axis=0))
+    v_min = np.minimum((0, 0, 0), a.min(axis=0))
     v_size = np.ceil(abs(v_max - v_min) + 1 + pad*2).astype(int)
     return v_size, v_min
 
+
 def _point_to_voxel_indices(point):
+    """transform the point coordinates into a tuple of integer indices.
+
+    Args:
+        point (Sequence[numeric]): point coordinates
+
+    Returns:
+        numpy.ndarray of type int: indices
+    """
     return np.round(point).astype(int)
+
 
 def bucket_numpy_to_volume_numpy(bucket_array, pad=0, side=None):
     """Transform a bucket into a 3d boolean volume.
     Input and output types are numpy.ndarray"""
-    
+
     v_size, v_min = _volume_size_from_numpy_bucket(bucket_array, pad)
 
     vol = np.zeros(np.array(v_size))
@@ -173,7 +184,7 @@ def volume_to_mesh(
         volume,
         gaussian_blur_FWWM=0,
         threshold_quantile=0,
-        translation=(0,0,0),
+        translation=(0, 0, 0),
         mesh_decimation_params=dict(
             reduction_rate=99,
             max_clearance=3,
@@ -314,8 +325,8 @@ def bucket_to_mesh(
     if not isinstance(bucket, np.ndarray):
         bucket = bucket_aims_to_ndarray(bucket)
 
-    x,y,z=bucket.T
-    translation = (x.min(),y.min(),z.min())
+    x, y, z = bucket.T
+    translation = (x.min(), y.min(), z.min())
 
     volume = bucket_numpy_to_volume_numpy(bucket)
 
@@ -351,7 +362,7 @@ def bucket_to_mesh(
 #     return aims.read("tmp/combined.mesh")
 
 #     tempfile.mkdtemp()
-    
+
 #     v = volume
 #     # normalize and transform to int16
 #     v = ((v - v.min())/(v.max()-v.min())*256).astype(np.float)
@@ -368,6 +379,7 @@ def bucket_to_mesh(
 #     sh(zcatCmd)
 
 #     return aims.read("tmp/combined.mesh")
+
 
 class PyMesh:
     def __init__(self, aims_mesh=None):
