@@ -381,7 +381,7 @@ def bucket_to_mesh(
 #     return aims.read("tmp/combined.mesh")
 
 
-def shift_aims_mesh(mesh, offset, scale=30, axis=0):
+def shift_aims_mesh(mesh, offset, scale=30, axis=1):
     """Translate each mesh of a specified distance along an axis.
 
     The scale parameter multiplies the distance values before applying the translation.
