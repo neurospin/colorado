@@ -98,6 +98,15 @@ def _volume_size_from_numpy_bucket(bucket_array, pad):
 
 
 def _point_to_voxel_indices(point):
+
+    """transform the point coordinates into a tuple of integer indices.
+
+    Args:
+        point (Sequence[numeric]): point coordinates
+
+    Returns:
+        numpy.ndarray of type int: indices
+    """
     return np.round(point).astype(int)
 
 
@@ -399,6 +408,19 @@ def bucket_to_mesh(
 #     sh(zcatCmd)
 
 #     return aims.read("tmp/combined.mesh")
+
+
+
+def shift_aims_mesh(mesh, offset, scale=30, axis=1):
+    """Translate each mesh of a specified distance along an axis.
+
+    The scale parameter multiplies the distance values before applying the translation.
+    """
+    offset_mesh = aims.AimsTimeSurface(mesh)
+    vertices = np.array([x[:] for x in mesh.vertex(0)])
+    vertices[:, axis] += offset*scale
+    offset_mesh.vertex(0).assign(vertices.tolist())
+    return offset_mesh
 
 
 class PyMesh:

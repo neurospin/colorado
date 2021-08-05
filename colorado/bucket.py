@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 from .aims_tools import bucket_aims_to_ndarray
 
 
-def get_bucket_g_o(bucket, name=None, marker_kwargs=dict(opacity=1), shift=(0,0,0), **kwargs):
+def get_bucket_g_o(bucket, name=None, marker_kwargs=dict(opacity=1), shift=(0, 0, 0), **kwargs):
 
     if bucket.shape[1] != 3:
         raise ValueError(
@@ -60,7 +60,7 @@ def draw_numpy_bucket(bucket):
 
 
 def draw_numpy_buckets(buckets, labels=None,
-                       transpose=True, shift=(0,0,0), fig=None):
+                       transpose=True, shift=(0, 0, 0), fig=None):
     """Draw buckets from numpy arrays.
 
     :param buckets: a list of arrays representing the buckets to plot.
@@ -78,7 +78,7 @@ def draw_numpy_buckets(buckets, labels=None,
     if not isinstance(buckets, dict):
         if labels is None:
             labels = range(len(buckets))
-        buckets = dict(zip(labels,buckets))
+        buckets = dict(zip(labels, buckets))
 
     if fig is None:
         fig = go.Figure()

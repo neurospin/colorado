@@ -6,7 +6,7 @@ from plotly.subplots import make_subplots
 from soma import aims as _aims
 
 
-def get_mesh3d_g_o(vertices, polygons, name=None, shift=(0,0,0), **kwargs):
+def get_mesh3d_g_o(vertices, polygons, name=None, shift=(0, 0, 0), **kwargs):
     """Get an plotly graphic object from numpy arrays
 
     Args:
@@ -81,7 +81,7 @@ def draw_meshes_in_subplots(mesh_list, cols=3):
     return fig
 
 
-def draw_pyMesh(mesh, shift=(0,0,0), **kwargs):
+def draw_pyMesh(mesh, shift=(0, 0, 0), **kwargs):
     """Draw a PyMesh object
 
     Args:
