@@ -1,4 +1,6 @@
 # from scipy.ndimage.measurements import minimum
+import os
+import tempfile
 from soma import aims, aimsalgo
 import numpy as np
 from scipy.ndimage import gaussian_filter
@@ -181,7 +183,74 @@ def add_border(x, thickness, value):
     return x
 
 
-def volume_to_mesh(
+def volume_to_mesh(volume, smoothingFactor=2.0, aimsThreshold='96%',
+                   deciMaxError=0.5, deciMaxClearance=1.0, smoothIt=20, translation=(0, 0, 0)):
+    """Generate the mesh of the input volume.
+    WARNING: This function directly call some BrainVisa command line tools via os.system calls.
+
+    Args:
+        volume (nparray or pyaims volume): The input volume.
+        smoothingFactor (float, optional): Standard deviation of the 3D isomorph Gaussian filter of the input volume.
+        aimsThreshold (float or str) : First threshold value. All voxels below this value are not considered.
+        deciMaxError (float) : Maximum error distance from the original mesh (mm).
+        deciMaxClearance (float) : Maximum clearance of the decimation.
+        smoothIt (int) : Number of mesh smoothing iteration.
+        translation (vector or 3 int) : translation to apply to the calculated mesh 
+
+    Returns:
+        aims Mesh : the mesh of the inputn volume.
+    """
+
+    v = volume[:]
+    # normalize and transform to int16
+    v = ((v - v.min())/(v.max()-v.min())*256).astype(np.float)
+
+    # temporary directory
+    dirpath = tempfile.mkdtemp()
+
+    # write volume to file
+    aims.write(ndarray_to_aims_volume(v), f"{dirpath}/temp.ima")
+
+    # Gaussian blur
+    gaussianSmoothCmd = f'AimsGaussianSmoothing -i {dirpath}/temp.ima  -o {dirpath}/temp_smooth.ima -x {smoothingFactor} -y {smoothingFactor} -z {smoothingFactor}'
+    os.system(gaussianSmoothCmd)
+
+    # Threshold
+    # read the blurred volume values and calculate the threshold
+    v = aims.read(f"{dirpath}/temp_smooth.ima")[:]
+    nonzero_voxels = v[v > 0].flatten()
+    if type(aimsThreshold) == str:
+        # the threshold is a string
+        if aimsThreshold[-1] == '%':
+            # use the percentage value
+            q = int(aimsThreshold[:-1])
+            aimsThreshold = np.percentile(nonzero_voxels, q)
+        else:
+            raise ValueError(
+                "aimsThreshold must be a float or a string expressing a percentage (eg '90%')")
+    thresholdCmd = f"AimsThreshold -i {dirpath}/temp_smooth.ima -o {dirpath}/temp_threshold.ima -b -t {aimsThreshold}"
+    os.system(thresholdCmd)
+
+    # MESH
+    # Generate one mesh per interface (connected component?)
+    meshCmd = f'AimsMesh -i {dirpath}/temp_threshold.ima -o {dirpath}/temp.mesh --decimation --deciMaxError {deciMaxError} --deciMaxClearance {deciMaxClearance} --smooth --smoothIt {smoothIt}'
+    os.system(meshCmd)
+    # concatenate the meshes
+    zcatCmd = f'AimsZCat  -i  {dirpath}/temp*.mesh -o {dirpath}/combined.mesh'
+    os.system(zcatCmd)
+
+    mesh = aims.read(f"{dirpath}/combined.mesh")
+
+    if translation != (0, 0, 0):
+        mesh = PyMesh(mesh)
+        # add translation
+        mesh.vertices = mesh.vertices + translation
+        mesh = mesh.to_aims_mesh()
+
+    return mesh
+
+
+def volume_to_mesh_experimental(
         volume,
         gaussian_blur_FWWM=0,
         threshold_absolute=None,
