@@ -100,6 +100,7 @@ def _volume_size_from_numpy_bucket(bucket_array, pad):
 
 
 def _point_to_voxel_indices(point):
+
     """transform the point coordinates into a tuple of integer indices.
 
     Args:
@@ -476,6 +477,7 @@ def bucket_to_mesh(
 #     sh(zcatCmd)
 
 #     return aims.read("tmp/combined.mesh")
+
 
 
 def shift_aims_mesh(mesh, offset, scale=30, axis=1):
