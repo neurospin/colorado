@@ -100,6 +100,7 @@ def _volume_size_from_numpy_bucket(bucket_array, pad):
 
 
 def _point_to_voxel_indices(point):
+
     """transform the point coordinates into a tuple of integer indices.
 
     Args:
@@ -407,7 +408,6 @@ def bucket_to_mesh(bucket, smoothingFactor=0, aimsThreshold=0,
         aimsThreshold = 0
 
     return volume_to_mesh(bucket, smoothingFactor=0, aimsThreshold=0, deciMaxError=deciMaxError, deciMaxClearance=deciMaxClearance, smoothIt=smoothIt, translation=translation)
-
 
 
 def bucket_to_mesh_experimental(
