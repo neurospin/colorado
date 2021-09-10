@@ -376,7 +376,41 @@ def volume_to_mesh_experimental(
     return mesh
 
 
-def bucket_to_mesh(
+def bucket_to_mesh(bucket, smoothingFactor=0, aimsThreshold=0,
+                   deciMaxError=0.5, deciMaxClearance=1.0, smoothIt=20, translation=(0, 0, 0)):
+    """Generate the mesh of the input bucket.
+    WARNING: This function directly call some BrainVisa command line tools via os.system calls.
+
+    Args:
+        bucket (nparray or pyaims bucket): The input bucket.
+        smoothingFactor (float, optional): Standard deviation of the 3D isomorph Gaussian filter of the input volume.
+        aimsThreshold (float or str) : First threshold value. All voxels below this value are not considered.
+        deciMaxError (float) : Maximum error distance from the original mesh (mm).
+        deciMaxClearance (float) : Maximum clearance of the decimation.
+        smoothIt (int) : Number of mesh smoothing iteration.
+        translation (vector or 3 int) : translation to apply to the calculated mesh 
+
+    Returns:
+        aims Mesh : the mesh of the inputn volume.
+    """
+
+    if not isinstance(bucket, np.ndarray):
+        bucket = bucket_aims_to_ndarray(bucket)
+
+    x, y, z = bucket.T
+    translation = (x.min(), y.min(), z.min())
+
+    volume = bucket_numpy_to_volume_numpy(bucket)
+
+    if smoothingFactor == 0 and aimsThreshold != 0:
+        log.warn("Thresholding is automatically disabled with smoothing FWHM=0. To remove this message set threshold_quantile=0")
+        aimsThreshold = 0
+
+    return volume_to_mesh(bucket, smoothingFactor=0, aimsThreshold=0, deciMaxError=deciMaxError, deciMaxClearance=deciMaxClearance, smoothIt=smoothIt, translation=translation)
+
+
+
+def bucket_to_mesh_experimental(
         bucket,
         gaussian_blur_FWWM=0,
         threshold_absolute=None,
@@ -431,51 +465,7 @@ def bucket_to_mesh(
         log.warn("Thresholding is automatically disabled with smoothing FWHM=0. To remove this message set threshold_quantile=0")
         threshold_quantile = 0
 
-    return volume_to_mesh(volume, gaussian_blur_FWWM, threshold_absolute, threshold_quantile, translation, decimation_params, smoothing_params)
-
-# THE OLD IMPLEMENTATION WITH COMMAND LINE TOOLS
-# def build_mesh(volume,
-#     aimsThreshold = 0,  # aimsThreshold param, smoothing threshold
-#     smoothingFactor = 2.0,  # the smoothing factor used before making MA mesh in step composeSpamMesh
-#     ):
-
-#     tempfile.mkdtemp()
-
-#     v = volume
-#     # normalize and transform to int16
-#     v = ((v - v.min())/(v.max()-v.min())*256).astype(np.float)
-
-#     aims.write(cld.aims_tools.ndarray_to_aims_volume(v), f"{dirpath}/temp.ima")
-#     gaussianSmoothCmd = f'AimsGaussianSmoothing -i {dirpath}/temp.ima  -o {dirpath}/temp_smooth.ima -x {smoothingFactor} -y {smoothingFactor} -z {smoothingFactor}'
-#     thresholdCmd = f"AimsThreshold -i {dirpath}/temp_smooth.ima -o {dirpath}/temp_threshold.ima -b -t {aimsThreshold}"
-#     meshCmd = f'AimsMesh -i {dirpath}/temp_threshold.ima -o {dirpath}/temp.mesh --deciMaxError 0.5 --deciMaxClearance 1 --smooth --smoothIt 20'
-#     zcatCmd = f'AimsZCat  -i  {dirpath}/temp*.mesh -o {dirpath}/combined.mesh'
-
-#     sh(gaussianSmoothCmd)
-#     sh(thresholdCmd)
-#     sh(meshCmd)
-#     sh(zcatCmd)
-
-#     return aims.read("tmp/combined.mesh")
-
-#     tempfile.mkdtemp()
-
-#     v = volume
-#     # normalize and transform to int16
-#     v = ((v - v.min())/(v.max()-v.min())*256).astype(np.float)
-
-#     aims.write(cld.aims_tools.ndarray_to_aims_volume(v), f"{dirpath}/temp.ima")
-#     gaussianSmoothCmd = f'AimsGaussianSmoothing -i {dirpath}/temp.ima  -o {dirpath}/temp_smooth.ima -x {smoothingFactor} -y {smoothingFactor} -z {smoothingFactor}'
-#     thresholdCmd = f"AimsThreshold -i {dirpath}/temp_smooth.ima -o {dirpath}/temp_threshold.ima -b -t {aimsThreshold}"
-#     meshCmd = f'AimsMesh -i {dirpath}/temp_threshold.ima -o {dirpath}/temp.mesh --deciMaxError 0.5 --deciMaxClearance 1 --smooth --smoothIt 20'
-#     zcatCmd = f'AimsZCat  -i  {dirpath}/temp*.mesh -o {dirpath}/combined.mesh'
-
-#     sh(gaussianSmoothCmd)
-#     sh(thresholdCmd)
-#     sh(meshCmd)
-#     sh(zcatCmd)
-
-#     return aims.read("tmp/combined.mesh")
+    return volume_to_mesh_experimental(volume, gaussian_blur_FWWM, threshold_absolute, threshold_quantile, translation, decimation_params, smoothing_params)
 
 
 def shift_aims_mesh(mesh, offset, scale=30, axis=1):
