@@ -100,7 +100,6 @@ def _volume_size_from_numpy_bucket(bucket_array, pad):
 
 
 def _point_to_voxel_indices(point):
-
     """transform the point coordinates into a tuple of integer indices.
 
     Args:
@@ -192,51 +191,73 @@ def volume_to_mesh(volume, smoothingFactor=2.0, aimsThreshold='96%',
         volume (nparray or pyaims volume): The input volume.
         smoothingFactor (float, optional): Standard deviation of the 3D isomorph Gaussian filter of the input volume.
         aimsThreshold (float or str) : First threshold value. All voxels below this value are not considered.
+            The threshold can be expressed as:
+            - a float, representing the threshold intensity
+            - a percentage (e.g. "95%") which represents the percentile of low-value pixel to eliminate.
         deciMaxError (float) : Maximum error distance from the original mesh (mm).
         deciMaxClearance (float) : Maximum clearance of the decimation.
         smoothIt (int) : Number of mesh smoothing iteration.
-        translation (vector or 3 int) : translation to apply to the calculated mesh 
+        translation (vector or 3 int) : translation to apply to the calculated mesh
 
     Returns:
         aims Mesh : the mesh of the inputn volume.
     """
 
+    log.debug("volume_to_mesh:")
+
     v = volume[:]
-    # normalize and transform to int16
+    # normalize
     v = ((v - v.min())/(v.max()-v.min())*256).astype(np.float)
 
     # temporary directory
     dirpath = tempfile.mkdtemp()
 
+    fname = "temp_initial.ima"
     # write volume to file
-    aims.write(ndarray_to_aims_volume(v), f"{dirpath}/temp.ima")
+    aims.write(ndarray_to_aims_volume(v), f"{dirpath}/{fname}")
 
     # Gaussian blur
-    gaussianSmoothCmd = f'AimsGaussianSmoothing -i {dirpath}/temp.ima  -o {dirpath}/temp_smooth.ima -x {smoothingFactor} -y {smoothingFactor} -z {smoothingFactor}'
-    os.system(gaussianSmoothCmd)
+    if smoothingFactor > 0:
+        out_fname = "temp_smoothed.ima"
+        gaussianSmoothCmd = f'AimsGaussianSmoothing -i {dirpath}/{fname} -o {dirpath}/{out_fname} -x {smoothingFactor} -y {smoothingFactor} -z {smoothingFactor}'
+        log.debug(gaussianSmoothCmd)
+        os.system(gaussianSmoothCmd)
+        fname = out_fname
 
     # Threshold
     # read the blurred volume values and calculate the threshold
-    v = aims.read(f"{dirpath}/temp_smooth.ima")[:]
+    v = aims.read(f"{dirpath}/{fname}")[:]
     nonzero_voxels = v[v > 0].flatten()
     if type(aimsThreshold) == str:
         # the threshold is a string
         if aimsThreshold[-1] == '%':
             # use the percentage value
-            q = int(aimsThreshold[:-1])
+            q = float(aimsThreshold[:-1])
             aimsThreshold = np.percentile(nonzero_voxels, q)
         else:
             raise ValueError(
                 "aimsThreshold must be a float or a string expressing a percentage (eg '90%')")
-    thresholdCmd = f"AimsThreshold -i {dirpath}/temp_smooth.ima -o {dirpath}/temp_threshold.ima -b -t {aimsThreshold}"
+
+    out_fname = "temp_threshold.ima"
+    thresholdCmd = f"AimsThreshold -i {dirpath}/{fname} -o {dirpath}/{out_fname} -b -t {aimsThreshold}"
+    log.debug(thresholdCmd)
     os.system(thresholdCmd)
+    fname = out_fname
 
     # MESH
     # Generate one mesh per interface (connected component?)
-    meshCmd = f'AimsMesh -i {dirpath}/temp_threshold.ima -o {dirpath}/temp.mesh --decimation --deciMaxError {deciMaxError} --deciMaxClearance {deciMaxClearance} --smooth --smoothIt {smoothIt}'
+    if smoothIt is not None and smoothIt is not 0:
+        smooth_arg = f"--smooth --smoothIt {smoothIt}"
+    else:
+        smooth_arg = ""
+
+    meshCmd = f'AimsMesh -i {dirpath}/{fname} -o {dirpath}/temp.mesh --decimation --deciMaxError {deciMaxError} --deciMaxClearance {deciMaxClearance} {smooth_arg}'
+    log.debug(meshCmd)
     os.system(meshCmd)
-    # concatenate the meshes
+
+    # Concatenate the meshes
     zcatCmd = f'AimsZCat  -i  {dirpath}/temp*.mesh -o {dirpath}/combined.mesh'
+    log.debug(zcatCmd)
     os.system(zcatCmd)
 
     mesh = aims.read(f"{dirpath}/combined.mesh")
@@ -250,134 +271,139 @@ def volume_to_mesh(volume, smoothingFactor=2.0, aimsThreshold='96%',
     return mesh
 
 
-def volume_to_mesh_experimental(
-        volume,
-        gaussian_blur_FWWM=0,
-        threshold_absolute=None,
-        threshold_quantile=0,
-        translation=(0, 0, 0),
-        decimation_params=dict(
-            reduction_rate=99,
-            max_clearance=3,
-            max_error=1,
-            feature_angle=180),
-        smoothing_params=dict(
-            algorithm='lowpass',
-            iterations=30,
-            rate=0.4,
-            # NOT IMPLEMENTED
-            # smoothing feature angle (in degrees) below which the vertex is not moved,
-            # only for the Laplacian algorithm, between 0 and 180 degree [default=0]
-            # laplacian_angle=0,
-            # smoothing restoring force for the Simple Spring and Polygon Spring
-            # algorithm, between 0 and 1 [default=0.2]
-            # polygonspring_force=0.2
-        )):
-    """Create a mesh from a volume.
+# def volume_to_mesh_experimental(
+#         volume,
+#         gaussian_blur_FWWM=0,
+#         threshold_absolute=None,
+#         threshold_quantile=0,
+#         translation=(0, 0, 0),
+#         decimation_params=dict(
+#             reduction_rate=99,
+#             max_clearance=3,
+#             max_error=1,
+#             feature_angle=180),
+#         smoothing_params=dict(
+#             algorithm='lowpass',
+#             iterations=30,
+#             rate=0.4,
+#             # NOT IMPLEMENTED
+#             # smoothing feature angle (in degrees) below which the vertex is not moved,
+#             # only for the Laplacian algorithm, between 0 and 180 degree [default=0]
+#             # laplacian_angle=0,
+#             # smoothing restoring force for the Simple Spring and Polygon Spring
+#             # algorithm, between 0 and 1 [default=0.2]
+#             # polygonspring_force=0.2
+#         )):
+#     """Create a mesh from a volume.
 
-    Before calculating the mesh, the volume is first blurred with a gaussian filter and then thresholded.
+#     Before calculating the mesh, the volume is first blurred with a gaussian filter and then thresholded.
 
-    Args:
-        volume (np.ndarray or aims.Volume): 3D binary image (if not binary, all vxels != 0 are set to 1)
-        gaussian_blur_FWWM (numeric) : the gaussian blur filter's full width at half maximum.
-        threshold_absolute all voxels lower than this value will be set to zero.
-        threshold_quantile (float in [0,1]): voxels with intensity below this quantile will be set to zero.
-            Applied only if threshold_absolute is None.
-        decimation_params (dict, optional): decimation parameters.
-            reduction_rate : expected % decimation reduction rate
-            max_clearance : maximum clearance of the decimation
-            max_error : maximum error distance from the original mesh (mm)
-            feature_angle : feature angle (degrees), between 0 and 180 
-        smoothing_params (dict, optional): smoothing parameters
-            type : smoothing alorithm's type (laplacian, simplespring, polygonspring or lowpass)
-            iterations : smoothing number of iterations
-            rate : smoothing moving rate at each iteration
+#     Args:
+#         volume (np.ndarray or aims.Volume): 3D binary image (if not binary, all vxels != 0 are set to 1)
+#         gaussian_blur_FWWM (numeric) : the gaussian blur filter's full width at half maximum.
+#         threshold_absolute all voxels lower than this value will be set to zero.
+#         threshold_quantile (float in [0,1]): voxels with intensity below this quantile will be set to zero.
+#             Applied only if threshold_absolute is None.
+#         decimation_params (dict, optional): decimation parameters.
+#             reduction_rate : expected % decimation reduction rate
+#             max_clearance : maximum clearance of the decimation
+#             max_error : maximum error distance from the original mesh (mm)
+#             feature_angle : feature angle (degrees), between 0 and 180
+#         smoothing_params (dict, optional): smoothing parameters
+#             type : smoothing alorithm's type (laplacian, simplespring, polygonspring or lowpass)
+#             iterations : smoothing number of iterations
+#             rate : smoothing moving rate at each iteration
 
-    Returns:
-        aims Mesh: A mesh obtained from the input volume
-    """
+#     Returns:
+#         aims Mesh: A mesh obtained from the input volume
+#     """
 
-    volume = volume_to_ndarray(volume).astype(float)
-    shape = volume.shape
+#     log.debug("Volume to mesh:")
+#     volume = volume_to_ndarray(volume).astype(float)
+#     shape = volume.shape
 
-    # gaussiam blur
-    if gaussian_blur_FWWM > 0:
-        sigma = gaussian_blur_FWWM/2.3548200450309493
-        volume = gaussian_filter(volume, sigma)
-    # normalization
-    assert(volume.max()-volume.min() != 0)
-    def normalize(x): return (x-x.min())/(x.max()-x.min())
-    volume = normalize(volume)
+#     # gaussiam blur
+#     log.debug(" - Gaussian blur")
+#     if gaussian_blur_FWWM > 0:
+#         sigma = gaussian_blur_FWWM/2.3548200450309493
+#         volume = gaussian_filter(volume, sigma)
 
-    # threshold
-    if threshold_absolute is not None:
-        q = threshold_absolute
-    elif threshold_quantile > 0:
-        q = np.quantile(volume[volume > 0], threshold_quantile)
-    else:
-        q = 0
+#     # normalization
+#     log.debug(" - Normalization")
+#     assert(volume.max()-volume.min() != 0)
+#     def normalize(x): return (x-x.min())/(x.max()-x.min())
+#     volume = normalize(volume)
 
-    volume = (volume > q).astype(int)
+#     # threshold
+#     log.debug(" - threshold")
+#     if threshold_absolute is not None:
+#         q = threshold_absolute
+#     elif threshold_quantile > 0:
+#         q = np.quantile(volume[volume > 0], threshold_quantile)
+#     else:
+#         q = 0
+#     volume = (volume > q).astype(int)
 
-    # add a -1 pad required for successive steps
-    # create an aims volume to use the fillBorder function
-    aims_volume = aims.Volume_S16(*shape, 1, 1)
-    aims_volume[:, :, :, 0] = (265*volume).astype(np.int16)  # copy data
-    aims_volume.fillBorder(-1)
+#     log.debug(" - add -1 border")
+#     # add a -1 pad required for successive steps
+#     # create an aims volume to use the fillBorder function
+#     aims_volume = aims.Volume_S16(*shape, 1, 1)
+#     aims_volume[:, :, :, 0] = (265*volume).astype(np.int16)  # copy data
+#     aims_volume.fillBorder(-1)
 
-    m = aimsalgo.Mesher()
+#     m = aimsalgo.Mesher()
 
-    # Ça renvoie un dict (label: liste de maillages, un par interface).
-    mesher_output = m.doit(aims_volume)
-    # WARGNING: the following assumes that mesher_output contains only one interface.
-    # Merge the meshes
-    meshes = list(mesher_output.values())[0]
-    merged_mesh = meshes[0]
-    for mesh in meshes[1:]:
-        aims.SurfaceManip.meshMerge(merged_mesh, mesh)
+#     # Ça renvoie un dict (label: liste de maillages, un par interface).
+#     mesher_output = m.doit(aims_volume)
+#     # WARGNING: the following assumes that mesher_output contains only one interface.
+#     # Merge the meshes
+#     meshes = list(mesher_output.values())[0]
+#     merged_mesh = meshes[0]
+#     for mesh in meshes[1:]:
+#         aims.SurfaceManip.meshMerge(merged_mesh, mesh)
 
-    mesh = merged_mesh
+#     mesh = merged_mesh
 
-    if mesh.size() == 0:
-        raise Exception("The mesh is empty, try different parameters")
+#     if mesh.size() == 0:
+#         raise Exception("The mesh is empty, try different parameters")
 
-    # DECIMATE
-    if decimation_params is not None:
-        d = decimation_params
-        print(d)
-        m.setDecimation(d['reduction_rate'], d['max_clearance'],
-                        d['max_error'], d['feature_angle'])
+#     # DECIMATE
+#     if decimation_params is not None:
+#         d = decimation_params
+#         print(d)
+#         m.setDecimation(d['reduction_rate'], d['max_clearance'],
+#                         d['max_error'], d['feature_angle'])
 
-        m.decimate(mesh)
+#         m.decimate(mesh)
 
-    # SMOOTH
-    if smoothing_params is not None:
-        smoothing_types = {
-            "lowpass": m.LOWPASS,
-            'laplacian': m.LAPLACIAN,
-            "simplespring": m.SIMPLESPRING,
-            "polygonspring": m.POLYGONSPRING
-        }
-        assert smoothing_params['algorithm'].lower() in smoothing_types,\
-            "smoothing_param must be one of {}, got '{}'".format(
-            smoothing_types.keys(), smoothing_params['algorithm'])
+#     # SMOOTH
+#     if smoothing_params is not None:
+#         smoothing_types = {
+#             "lowpass": m.LOWPASS,
+#             'laplacian': m.LAPLACIAN,
+#             "simplespring": m.SIMPLESPRING,
+#             "polygonspring": m.POLYGONSPRING
+#         }
+#         assert smoothing_params['algorithm'].lower() in smoothing_types,\
+#             "smoothing_param must be one of {}, got '{}'".format(
+#             smoothing_types.keys(), smoothing_params['algorithm'])
 
-        d = smoothing_params
-        m.setSmoothing(
-            smoothing_types[d['algorithm']], d['iterations'], d['rate'])
+#         d = smoothing_params
+#         m.setSmoothing(
+#             smoothing_types[d['algorithm']], d['iterations'], d['rate'])
 
-        m.smooth(mesh)
+#         m.smooth(mesh)
 
-    if translation != (0, 0, 0):
-        mesh = PyMesh(mesh)
-        # add translation
-        mesh.vertices = mesh.vertices + translation
-        mesh = mesh.to_aims_mesh()
+#     if translation != (0, 0, 0):
+#         mesh = PyMesh(mesh)
+#         # add translation
+#         mesh.vertices = mesh.vertices + translation
+#         mesh = mesh.to_aims_mesh()
 
-    return mesh
+#     return mesh
 
 
-def bucket_to_mesh(bucket, smoothingFactor=0, aimsThreshold=0,
+def bucket_to_mesh(bucket, smoothingFactor=0, aimsThreshold=1,
                    deciMaxError=0.5, deciMaxClearance=1.0, smoothIt=20, translation=(0, 0, 0)):
     """Generate the mesh of the input bucket.
     WARNING: This function directly call some BrainVisa command line tools via os.system calls.
@@ -403,69 +429,65 @@ def bucket_to_mesh(bucket, smoothingFactor=0, aimsThreshold=0,
 
     volume = bucket_numpy_to_volume_numpy(bucket)
 
-    if smoothingFactor == 0 and aimsThreshold != 0:
-        log.warn("Thresholding is automatically disabled with smoothing FWHM=0. To remove this message set threshold_quantile=0")
-        aimsThreshold = 0
-
-    return volume_to_mesh(bucket, smoothingFactor=0, aimsThreshold=0, deciMaxError=deciMaxError, deciMaxClearance=deciMaxClearance, smoothIt=smoothIt, translation=translation)
+    return volume_to_mesh(volume, smoothingFactor=smoothingFactor, aimsThreshold=aimsThreshold, deciMaxError=deciMaxError, deciMaxClearance=deciMaxClearance, smoothIt=smoothIt, translation=translation)
 
 
-def bucket_to_mesh_experimental(
-        bucket,
-        gaussian_blur_FWWM=0,
-        threshold_absolute=None,
-        threshold_quantile=0,
-        decimation_params=dict(
-            reduction_rate=99,
-            max_clearance=3,
-            max_error=1,
-            feature_angle=180),
-        smoothing_params=dict(
-            algorithm='lowpass',
-            iterations=30,
-            rate=0.4,
-            # NOT IMPLEMENTED
-            # smoothing feature angle (in degrees) below which the vertex is not moved,
-            # only for the Laplacian algorithm, between 0 and 180 degree [default=0]
-            # laplacian_angle=0,
-            # smoothing restoring force for the Simple Spring and Polygon Spring
-            # algorithm, between 0 and 1 [default=0.2]
-            # polygonspring_force=0.2
-        )):
-    """Create a mesh from a bucket
+# def bucket_to_mesh_experimental(
+#         bucket,
+#         gaussian_blur_FWWM=0,
+#         threshold_absolute=None,
+#         threshold_quantile=0,
+#         decimation_params=dict(
+#             reduction_rate=99,
+#             max_clearance=3,
+#             max_error=1,
+#             feature_angle=180),
+#         smoothing_params=dict(
+#             algorithm='lowpass',
+#             iterations=30,
+#             rate=0.4,
+#             # NOT IMPLEMENTED
+#             # smoothing feature angle (in degrees) below which the vertex is not moved,
+#             # only for the Laplacian algorithm, between 0 and 180 degree [default=0]
+#             # laplacian_angle=0,
+#             # smoothing restoring force for the Simple Spring and Polygon Spring
+#             # algorithm, between 0 and 1 [default=0.2]
+#             # polygonspring_force=0.2
+#         )):
+#     """Create a mesh from a bucket
 
-    Args:
-        bucket (np.ndarray or aims.Volume): sequence of 3D points. 
-        gaussian_blur_FWWM (numeric) : the gaussian blur filter's full with at half maximum.
-        threshold_absolute all voxels lower than this value will be set to zero.
-        threshold_quantile (float in [0,1]): voxels with intensity below this quantile will be set to zero.
-            Applied only if threshold_absolute is None.
-        decimation_params (dict, optional): decimation parameters.
-            reduction_rate : expected % decimation reduction rate
-            max_clearance : maximum clearance of the decimation
-            max_error : maximum error distance from the original mesh (mm)
-            feature_angle : feature angle (degrees), between 0 and 180 
-        smoothing_params (dict, optional): smoothing parameters
-            type : smoothing alorithm's type (laplacian, simplespring, polygonspring or lowpass)
-            iterations : smoothing number of iterations
-            rate : smoothing moving rate at each iteration
+#     Args:
+#         bucket (np.ndarray or aims.Volume): sequence of 3D points.
+#         gaussian_blur_FWWM (numeric) : the gaussian blur filter's full with at half maximum.
+#         threshold_absolute all voxels lower than this value will be set to zero.
+#         threshold_quantile (float in [0,1]): voxels with intensity below this quantile will be set to zero.
+#             Applied only if threshold_absolute is None.
+#         decimation_params (dict, optional): decimation parameters.
+#             reduction_rate : expected % decimation reduction rate
+#             max_clearance : maximum clearance of the decimation
+#             max_error : maximum error distance from the original mesh (mm)
+#             feature_angle : feature angle (degrees), between 0 and 180
+#         smoothing_params (dict, optional): smoothing parameters
+#             type : smoothing alorithm's type (laplacian, simplespring, polygonspring or lowpass)
+#             iterations : smoothing number of iterations
+#             rate : smoothing moving rate at each iteration
 
-    Returns:
-        aims Mesh: A mesh obtained from the input volume
-    """
-    if not isinstance(bucket, np.ndarray):
-        bucket = bucket_aims_to_ndarray(bucket)
+#     Returns:
+#         aims Mesh: A mesh obtained from the input volume
+#     """
+#     if not isinstance(bucket, np.ndarray):
+#         bucket = bucket_aims_to_ndarray(bucket)
 
-    x, y, z = bucket.T
-    translation = (x.min(), y.min(), z.min())
+#     x, y, z = bucket.T
+#     translation = (x.min(), y.min(), z.min())
 
-    volume = bucket_numpy_to_volume_numpy(bucket)
+#     volume = bucket_numpy_to_volume_numpy(bucket)
 
-    if gaussian_blur_FWWM == 0 and threshold_quantile != 0:
-        log.warn("Thresholding is automatically disabled with smoothing FWHM=0. To remove this message set threshold_quantile=0")
-        threshold_quantile = 0
+#     if gaussian_blur_FWWM == 0 and threshold_quantile != 0:
+#         log.warn("Thresholding is automatically disabled with smoothing FWHM=0. To remove this message set threshold_quantile=0")
+#         threshold_quantile = 0
 
-    return volume_to_mesh_experimental(volume, gaussian_blur_FWWM, threshold_absolute, threshold_quantile, translation, decimation_params, smoothing_params)
+#     return volume_to_mesh_experimental(volume, gaussian_blur_FWWM, threshold_absolute, threshold_quantile, translation, decimation_params, smoothing_params)
 
 
 def shift_aims_mesh(mesh, offset, scale=30, axis=1):
