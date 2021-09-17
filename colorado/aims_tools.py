@@ -559,6 +559,7 @@ def shift_aims_mesh(mesh, offset, scale=30, axis=1):
     """Translate each mesh of a specified distance along an axis.
 
     The scale parameter multiplies the distance values before applying the translation.
+    Returns a shifted mesh
     """
     offset_mesh = aims.AimsTimeSurface(mesh)
     vertices = np.array([x[:] for x in mesh.vertex(0)])
