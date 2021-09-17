@@ -7,7 +7,7 @@ from .mesh import get_aims_mesh_g_o, draw_pyMesh, draw_meshes_in_subplots, draw_
 from .volume import draw_volume, get_volume_g_o, draw_volumes
 from re import match as _re_match
 
-from .aims_tools import PyMesh, PyMeshFrame
+from .aims_tools import PyMesh, PyMeshFrame, buket_to_aligned_mesh, buket_to_mesh, volume_to_mesh
 from . import aims_tools
 
 import numpy

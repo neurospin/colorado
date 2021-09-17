@@ -38,7 +38,7 @@ def get_aims_bucket_map_g_o(aims_bucket_map, name=None, shift=(0, 0, 0), **kwarg
     return buckets_g_o
 
 
-def draw_numpy_bucket(bucket):
+def draw_numpy_bucket(bucket, fig=None):
     """Draw one bucket from numpy array
 
     Args:
@@ -50,7 +50,8 @@ def draw_numpy_bucket(bucket):
     assert bucket.shape[1] == 3,\
         "wrong shape: expected (N,3) got {}".format(bucket.shape)
     x, y, z = bucket.T
-    fig = go.Figure()
+    if fig is None:
+        fig = go.Figure()
     fig.add_trace(
         go.Scatter3d(x=x, y=y, z=z, mode='markers',
                      marker=dict(size=1, opacity=1)

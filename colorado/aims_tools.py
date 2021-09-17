@@ -183,7 +183,7 @@ def add_border(x, thickness, value):
 
 
 def volume_to_mesh(volume, smoothingFactor=2.0, aimsThreshold='96%',
-                   deciMaxError=0.5, deciMaxClearance=1.0, smoothIt=20, translation=(0, 0, 0)):
+                   deciMaxError=0.5, deciMaxClearance=1.0, smoothIt=20, translation=(0, 0, 0), transl_scale=30):
     """Generate the mesh of the input volume.
     WARNING: This function directly call some BrainVisa command line tools via os.system calls.
 
@@ -262,11 +262,13 @@ def volume_to_mesh(volume, smoothingFactor=2.0, aimsThreshold='96%',
 
     mesh = aims.read(f"{dirpath}/combined.mesh")
 
-    if translation != (0, 0, 0):
-        mesh = PyMesh(mesh)
-        # add translation
-        mesh.vertices = mesh.vertices + translation
-        mesh = mesh.to_aims_mesh()
+    assert len(translation) == 3, "len(translation) must be 3"
+
+    for i in range(3):
+        # for each dimension
+        if translation[i] != 0:
+            mesh = shift_aims_mesh(
+                mesh, translation[i], scale=transl_scale, axis=i)
 
     return mesh
 
@@ -403,13 +405,13 @@ def volume_to_mesh(volume, smoothingFactor=2.0, aimsThreshold='96%',
 #     return mesh
 
 
-def bucket_to_mesh(bucket, smoothingFactor=0, aimsThreshold=1,
-                   deciMaxError=0.5, deciMaxClearance=1.0, smoothIt=20, translation=(0, 0, 0)):
+def buket_to_mesh(buket, smoothingFactor=0, aimsThreshold=1,
+                  deciMaxError=0.5, deciMaxClearance=1.0, smoothIt=20, translation=(0, 0, 0), scale=30):
     """Generate the mesh of the input bucket.
     WARNING: This function directly call some BrainVisa command line tools via os.system calls.
 
     Args:
-        bucket (nparray or pyaims bucket): The input bucket.
+        buket (nparray or pyaims bucket): The input bucket.
         smoothingFactor (float, optional): Standard deviation of the 3D isomorph Gaussian filter of the input volume.
         aimsThreshold (float or str) : First threshold value. All voxels below this value are not considered.
         deciMaxError (float) : Maximum error distance from the original mesh (mm).
@@ -421,16 +423,54 @@ def bucket_to_mesh(bucket, smoothingFactor=0, aimsThreshold=1,
         aims Mesh : the mesh of the inputn volume.
     """
 
-    if not isinstance(bucket, np.ndarray):
-        bucket = bucket_aims_to_ndarray(bucket)
+    if any([x-int(x) != 0 for x in buket[:].ravel()]):
+        log.warn(
+            "This buket's coordinates are not integers. Did you apply any transformation to it?")
 
-    x, y, z = bucket.T
-    translation = (x.min(), y.min(), z.min())
+    if not isinstance(buket, np.ndarray):
+        buket = bucket_aims_to_ndarray(buket)
 
-    volume = bucket_numpy_to_volume_numpy(bucket)
+    # x, y, z = buket.T
+    # translation = (x.min(), y.min(), z.min())
 
-    return volume_to_mesh(volume, smoothingFactor=smoothingFactor, aimsThreshold=aimsThreshold, deciMaxError=deciMaxError, deciMaxClearance=deciMaxClearance, smoothIt=smoothIt, translation=translation)
+    volume = bucket_numpy_to_volume_numpy(buket)
 
+    return volume_to_mesh(volume, smoothingFactor=smoothingFactor, aimsThreshold=aimsThreshold,
+                          deciMaxError=deciMaxError, deciMaxClearance=deciMaxClearance, smoothIt=smoothIt,
+                          translation=translation, transl_scale=scale)
+
+
+def buket_to_aligned_mesh(raw_buket, talairach_dxyz, talairach_rot, talairach_tr, align_rot, align_tr, flip=False, **kwargs):
+    """Generate the mesh of the given buket.
+
+    The mesh is transformed according to the given rotations and translations.
+
+    The Talairach parameters are the scaling vector, the rotation matrix and the translation vector of the Talairach transform.
+    The align paramenters are the rotation matrix and translation vector of the alignment with the central subjet.
+
+    The kwargs are directly passed to cld.aims_tools.buket_to_mesh().
+    """
+
+    # Generate mesh
+    mesh = buket_to_mesh(raw_buket, **kwargs)
+
+    dxyz = talairach_dxyz.copy()
+
+    # Rescale mesh
+    rescale_mesh(mesh, dxyz)
+
+    # apply Talairach transform
+    M1 = get_aims_affine_transform(talairach_rot, talairach_tr)
+    aims.SurfaceManip.meshTransform(mesh, M1)
+
+    if flip:
+        flip_mesh(mesh)
+
+    # apply alignment transform
+    M2 = get_aims_affine_transform(align_rot, align_tr)
+    aims.SurfaceManip.meshTransform(mesh, M2)
+
+    return mesh
 
 # def bucket_to_mesh_experimental(
 #         bucket,
@@ -488,6 +528,31 @@ def bucket_to_mesh(bucket, smoothingFactor=0, aimsThreshold=1,
 #         threshold_quantile = 0
 
 #     return volume_to_mesh_experimental(volume, gaussian_blur_FWWM, threshold_absolute, threshold_quantile, translation, decimation_params, smoothing_params)
+
+
+def get_aims_affine_transform(rotation_matrix, transltion_vector):
+    """Get an aims AffineTransformation3d from rotation matrix and rotation vector"""
+    m = np.hstack([rotation_matrix, transltion_vector.reshape(-1, 1)])
+    M = aims.AffineTransformation3d()
+    M.fromMatrix(m)
+    return M
+
+
+def rescale_mesh(mesh, dxyz):
+    """Rescale a mesh by multiplying its vertices with the factors in dxyx.
+    The rescaling is done in place."""
+    for i in range(mesh.size()):
+        mesh.vertex(i).assign(
+            [aims.Point3df(np.array(x[:])*dxyz) for x in mesh.vertex(i)])
+
+
+def flip_mesh(mesh, axis=0):
+    """Flip the mesh by inverting the specified axis"""
+    flip_v = np.ones(3)
+    flip_v[axis] = -1
+    for i in range(mesh.size()):
+        mesh.vertex(i).assign(
+            [aims.Point3df(np.array(x[:])*flip_v) for x in mesh.vertex(i)])
 
 
 def shift_aims_mesh(mesh, offset, scale=30, axis=1):
