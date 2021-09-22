@@ -146,6 +146,10 @@ def bucket_numpy_to_volume_aims(bucket_array, pad=0):
 def bucket_aims_to_volume_aims(aims_bucket, pad=0):
     """Transform a bucket into a 3d boolean volume.
     Input and output types are aims objects"""
+
+    # TODO : transfer metadata
+    # e.g. the dxyz is kept in the aims volume
+
     abucket = bucket_aims_to_ndarray(aims_bucket)
     return bucket_numpy_to_volume_aims(abucket, pad=pad)
 
