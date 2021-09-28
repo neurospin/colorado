@@ -64,6 +64,26 @@ def bucket_aims_to_ndarray(aims_bucket):
     return v
 
 
+def bucket_numpy_to_buket_aims(ndarray):
+    """Transform a (N,3) ndarray into an aims BucketMap_VOID.
+    The coordinates in the input array are casted to int.
+    """
+
+    assert ndarray.shape[1] == 3, " ndarray shape must be (N,3)"
+
+    if ndarray.dtype != int:
+        ndarray = ndarray.astype(int)
+
+    # create aims bucketmap instance
+    bck = aims.BucketMap_VOID()
+    b0 = bck[0]
+
+    # fill the bucket
+    for x,y,z in ndarray:
+        b0[x,y,z] = 1
+
+    return bck
+
 def volume_to_ndarray(volume):
     """Transform aims volume in numpy array.
 
