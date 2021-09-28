@@ -20,6 +20,10 @@ It can be used, for example, inside jupyter notebooks.
 Most probably, you want to install colorado in an environment that already has aims.
 In Brainvisa 5, you can enter the environment with the command `bv bash`. Then:
 
+0. **NOTE** on running pip in `bv bash`:
+
+    To make sure you are installing python modules in the right python environment (namely that of brainvisa) use `python -m pip` instead of `pip`
+
 1. clone this repo
 
 2. install the module:
