@@ -15,6 +15,10 @@ import numpy
 from soma import aims as _aims
 
 
+def new_figure(*args,**kwargs):
+    """Create a new Figure"""
+    return plotly.graph_objs.Figure(*args,**kwargs)
+
 def draw(data, fig=None, labels=None, shift=(0, 0, 0), draw_function=None, draw_f_args=dict(), **kwargs):
     """Draw objects with plotly
 

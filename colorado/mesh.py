@@ -14,17 +14,31 @@ def get_mesh3d_g_o(vertices, polygons, name=None, shift=(0, 0, 0), **kwargs):
         polygons (numpy.ndarray): Nx3 array of points representing the polygons
         name (str, optional): The plot name. Defaults to None.
 
+    kwargs:
+        color : list of 3 RGB values in [0,255]
+
     Returns:
         plotly.graph_objects : a graphic pbject
     """
     v = vertices + shift
     v = v.T
     p = polygons.T
+
+    color = kwargs.get('color', None)
+    if color is not None:
+        try:
+            color = "rgb({},{},{})".format(*color)
+        except Exception as e:
+            raise(Exception("color should be a list of 3 integers (RGB values)"))
+    else:
+        color='rgb(255,200,200)'
+
+
     return go.Mesh3d(
         x=v[0], y=v[1], z=v[2],
         i=p[0], j=p[1], k=p[2],
         opacity=1,
-        color='rgb(255,200,200)',
+        color=color,
         lighting=go.mesh3d.Lighting(ambient=0.1,),
         lightposition=go.mesh3d.Lightposition(x=0, y=0, z=0),
         name=name
