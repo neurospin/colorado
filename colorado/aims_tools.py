@@ -64,7 +64,7 @@ def bucket_aims_to_ndarray(aims_bucket):
     return v
 
 
-def bucket_numpy_to_buket_aims(ndarray):
+def bucket_numpy_to_bucket_aims(ndarray):
     """Transform a (N,3) ndarray into an aims BucketMap_VOID.
     The coordinates in the input array are casted to int.
     """
@@ -79,10 +79,11 @@ def bucket_numpy_to_buket_aims(ndarray):
     b0 = bck[0]
 
     # fill the bucket
-    for x,y,z in ndarray:
-        b0[x,y,z] = 1
+    for x, y, z in ndarray:
+        b0[x, y, z] = 1
 
     return bck
+
 
 def volume_to_ndarray(volume):
     """Transform aims volume in numpy array.
@@ -429,13 +430,13 @@ def volume_to_mesh(volume, smoothingFactor=2.0, aimsThreshold='96%',
 #     return mesh
 
 
-def buket_to_mesh(buket, smoothingFactor=0, aimsThreshold=1,
-                  deciMaxError=0.5, deciMaxClearance=1.0, smoothIt=20, translation=(0, 0, 0), scale=30):
+def bucket_to_mesh(bucket, smoothingFactor=0, aimsThreshold=1,
+                   deciMaxError=0.5, deciMaxClearance=1.0, smoothIt=20, translation=(0, 0, 0), scale=30):
     """Generate the mesh of the input bucket.
     WARNING: This function directly call some BrainVisa command line tools via os.system calls.
 
     Args:
-        buket (nparray or pyaims bucket): The input bucket.
+        bucket (nparray or pyaims bucket): The input bucket.
         smoothingFactor (float, optional): Standard deviation of the 3D isomorph Gaussian filter of the input volume.
         aimsThreshold (float or str) : First threshold value. All voxels below this value are not considered.
         deciMaxError (float) : Maximum error distance from the original mesh (mm).
@@ -447,36 +448,41 @@ def buket_to_mesh(buket, smoothingFactor=0, aimsThreshold=1,
         aims Mesh : the mesh of the inputn volume.
     """
 
-    if any([x-int(x) != 0 for x in buket[:].ravel()]):
+    if any([x-int(x) != 0 for x in bucket[:].ravel()]):
         log.warn(
-            "This buket's coordinates are not integers. Did you apply any transformation to it?")
+            "This bucket's coordinates are not integers. Did you apply any transformation to it?")
 
-    if not isinstance(buket, np.ndarray):
-        buket = bucket_aims_to_ndarray(buket)
+    if not isinstance(bucket, np.ndarray):
+        bucket = bucket_aims_to_ndarray(bucket)
 
-    # x, y, z = buket.T
+    # x, y, z = bucket.T
     # translation = (x.min(), y.min(), z.min())
 
-    volume = bucket_numpy_to_volume_numpy(buket)
+    volume = bucket_numpy_to_volume_numpy(bucket)
 
     return volume_to_mesh(volume, smoothingFactor=smoothingFactor, aimsThreshold=aimsThreshold,
                           deciMaxError=deciMaxError, deciMaxClearance=deciMaxClearance, smoothIt=smoothIt,
                           translation=translation, transl_scale=scale)
 
 
-def buket_to_aligned_mesh(raw_buket, talairach_dxyz, talairach_rot, talairach_tr, align_rot, align_tr, flip=False, **kwargs):
-    """Generate the mesh of the given buket.
+def buket_to_aligned_mesh(*args, **kwargs):
+    raise SyntaxError(
+        "This function is deprecated due to misspelling of 'bucket', please use bucket_to_aligned_mesh")
+
+
+def bucket_to_aligned_mesh(raw_bucket, talairach_dxyz, talairach_rot, talairach_tr, align_rot, align_tr, flip=False, **kwargs):
+    """Generate the mesh of the given bucket.
 
     The mesh is transformed according to the given rotations and translations.
 
     The Talairach parameters are the scaling vector, the rotation matrix and the translation vector of the Talairach transform.
     The align paramenters are the rotation matrix and translation vector of the alignment with the central subjet.
 
-    The kwargs are directly passed to cld.aims_tools.buket_to_mesh().
+    The kwargs are directly passed to cld.aims_tools.bucket_to_mesh().
     """
 
     # Generate mesh
-    mesh = buket_to_mesh(raw_buket, **kwargs)
+    mesh = bucket_to_mesh(raw_bucket, **kwargs)
 
     dxyz = talairach_dxyz.copy()
 
@@ -579,17 +585,33 @@ def flip_mesh(mesh, axis=0):
             [aims.Point3df(np.array(x[:])*flip_v) for x in mesh.vertex(i)])
 
 
-def shift_aims_mesh(mesh, offset, scale=30, axis=1):
+def shift_aims_mesh(mesh, offset, scale=1):
     """Translate each mesh of a specified distance along an axis.
 
     The scale parameter multiplies the distance values before applying the translation.
     Returns a shifted mesh
     """
+    try:
+        iter(offset)
+    except TypeError:
+        raise TypeError(
+            "Offset must be an iterable of length 3. Use shift_aims_mesh_along_axis() to apply a scalar offset to a given axis")
+
+    if len(offset) != 3:
+        raise ValueError("len(offset) must be 3.")
+
     offset_mesh = aims.AimsTimeSurface(mesh)
     vertices = np.array([x[:] for x in mesh.vertex(0)])
-    vertices[:, axis] += offset*scale
+    for axis in range(3):
+        vertices[:, axis] += offset[axis]*scale
     offset_mesh.vertex(0).assign(vertices.tolist())
     return offset_mesh
+
+
+def shift_aims_mesh_along_axis(mesh, offset, scale=30, axis=1):
+    shift_v = np.zeros(3)
+    shift_v[axis] = offset
+    return shift_aims_mesh(mesh, shift_v, scale=scale)
 
 
 class PyMesh:

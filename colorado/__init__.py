@@ -7,7 +7,7 @@ from .mesh import get_aims_mesh_g_o, draw_pyMesh, draw_meshes_in_subplots, draw_
 from .volume import draw_volume, get_volume_g_o, draw_volumes
 from re import match as _re_match
 
-from .aims_tools import PyMesh, PyMeshFrame, buket_to_aligned_mesh, buket_to_mesh, volume_to_mesh
+from .aims_tools import PyMesh, PyMeshFrame, bucket_to_aligned_mesh, bucket_to_mesh, volume_to_mesh
 from . import aims_tools
 
 import numpy
@@ -15,9 +15,10 @@ import numpy
 from soma import aims as _aims
 
 
-def new_figure(*args,**kwargs):
+def new_figure(*args, **kwargs):
     """Create a new Figure"""
-    return plotly.graph_objs.Figure(*args,**kwargs)
+    return plotly.graph_objs.Figure(*args, **kwargs)
+
 
 def draw(data, fig=None, labels=None, shift=(0, 0, 0), draw_function=None, draw_f_args=dict(), **kwargs):
     """Draw objects with plotly

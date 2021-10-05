@@ -24,15 +24,7 @@ def get_mesh3d_g_o(vertices, polygons, name=None, shift=(0, 0, 0), **kwargs):
     v = v.T
     p = polygons.T
 
-    color = kwargs.get('color', None)
-    if color is not None:
-        try:
-            color = "rgb({},{},{})".format(*color)
-        except Exception as e:
-            raise(Exception("color should be a list of 3 integers (RGB values)"))
-    else:
-        color='rgb(255,200,200)'
-
+    color = kwargs.get('color', 'rgb(255,200,200)')
 
     return go.Mesh3d(
         x=v[0], y=v[1], z=v[2],
