@@ -2,9 +2,11 @@ import numpy
 from typing import Sequence
 import plotly.graph_objects as go
 from .aims_tools import bucket_aims_to_ndarray
+import logging
+log = logging.getLogger(__name__)
 
 
-def get_bucket_g_o(bucket, name=None, marker_kwargs=dict(opacity=1), shift=(0, 0, 0), **kwargs):
+def get_bucket_g_o(bucket, name=None, shift=(0, 0, 0), **kwargs):
 
     if bucket.shape[1] != 3:
         raise ValueError(
@@ -13,9 +15,18 @@ def get_bucket_g_o(bucket, name=None, marker_kwargs=dict(opacity=1), shift=(0, 0
     bucket = bucket+shift
     x, y, z = bucket.T
 
+    # set default marker properties from otional arguments
+    marker = kwargs.get("marker", None)
+    if marker is not None:
+        opacity = marker.get('opacity', 1)
+        if opacity < 1:
+            log.warning("Opacity < 1 is buggy in Plotly 3D Scatter plot")
+        marker['opacity'] = marker.get('opacity', 1)
+        marker['size'] = marker.get('size', 1)
+
     s3d = go.Scatter3d(
         x=x, y=y, z=z, mode='markers',
-        marker=dict(size=1, **marker_kwargs),
+        marker=marker,
         name=name,
     )
 
