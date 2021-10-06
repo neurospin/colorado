@@ -16,13 +16,13 @@ def get_bucket_g_o(bucket, name=None, shift=(0, 0, 0), **kwargs):
     x, y, z = bucket.T
 
     # set default marker properties from otional arguments
-    marker = kwargs.get("marker", None)
-    if marker is not None:
-        opacity = marker.get('opacity', 1)
-        if opacity < 1:
-            log.warning("Opacity < 1 is buggy in Plotly 3D Scatter plot")
-        marker['opacity'] = marker.get('opacity', 1)
-        marker['size'] = marker.get('size', 1)
+    marker = kwargs.get("marker", dict())
+    opacity = marker.get('opacity', 1)
+    if opacity < 1:
+        log.warning("Opacity < 1 is buggy in Plotly 3D Scatter plot")
+
+    marker['opacity'] = opacity
+    marker['size'] = marker.get('size', 1)
 
     s3d = go.Scatter3d(
         x=x, y=y, z=z, mode='markers',
