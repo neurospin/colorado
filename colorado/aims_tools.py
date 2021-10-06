@@ -655,7 +655,7 @@ class PyMesh:
         return self.frames[0].polygons
 
     @polygons.setter
-    def polygon(self, v):
+    def polygons(self, v):
         self.frames[0].polygons = v
 
     @property
