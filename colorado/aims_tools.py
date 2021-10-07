@@ -57,10 +57,13 @@ def bucket_aims_to_ndarray(aims_bucket):
     """
     assert isinstance(aims_bucket, aims.BucketMap_VOID.Bucket)
 
-    v = np.empty((aims_bucket.size(), len(aims_bucket.keys()[0].list())))
-    for i, point in enumerate(aims_bucket.keys()):
-        v[i] = point.arraydata()
-
+    if aims_bucket.size() > 0:
+        v = np.empty((aims_bucket.size(), len(aims_bucket.keys()[0].list())))
+        for i, point in enumerate(aims_bucket.keys()):
+            v[i] = point.arraydata()
+    else:
+        log.warning("Empty bucket! This can be a source of problems...")
+        v = np.empty(0)
     return v
 
 
@@ -442,18 +445,20 @@ def bucket_to_mesh(bucket, smoothingFactor=0, aimsThreshold=1,
         deciMaxError (float) : Maximum error distance from the original mesh (mm).
         deciMaxClearance (float) : Maximum clearance of the decimation.
         smoothIt (int) : Number of mesh smoothing iteration.
-        translation (vector or 3 int) : translation to apply to the calculated mesh 
+        translation (vector or 3 int) : translation to apply to the calculated mesh
 
     Returns:
         aims Mesh : the mesh of the inputn volume.
     """
 
+    if isinstance(bucket, aims.BucketMap_VOID.Bucket):
+        bucket = bucket_aims_to_ndarray(bucket)
+    elif isinstance(bucket, aims.BucketMap_VOID):
+        raise ValueError("Input is a BucketMap, not a bucket.")
+
     if any([x-int(x) != 0 for x in bucket[:].ravel()]):
         log.warn(
             "This bucket's coordinates are not integers. Did you apply any transformation to it?")
-
-    if not isinstance(bucket, np.ndarray):
-        bucket = bucket_aims_to_ndarray(bucket)
 
     # x, y, z = bucket.T
     # translation = (x.min(), y.min(), z.min())
@@ -642,27 +647,27 @@ class PyMesh:
                     raise ValueError("Invalid aims mesh")
                 self.frames[i] = l
 
-    @property
+    @ property
     def vertices(self):
         return self.frames[0].vertices
 
-    @vertices.setter
+    @ vertices.setter
     def vertices(self, v):
         self.frames[0].vertices = v
 
-    @property
+    @ property
     def polygons(self):
         return self.frames[0].polygons
 
-    @polygons.setter
+    @ polygons.setter
     def polygons(self, v):
         self.frames[0].polygons = v
 
-    @property
+    @ property
     def normals(self):
         return self.frames[0].normals
 
-    @normals.setter
+    @ normals.setter
     def normals(self, v):
         self.frames[0].normals = v
 
@@ -705,7 +710,7 @@ class PyMesh:
 
         return mesh
 
-    @staticmethod
+    @ staticmethod
     def _mesh_prop_to_numpy(mesh_prop):
         """return a new numpy array converting AIMS mesh properties
         into numpy ndarrays (soma.aims.vector_POINT2DF)"""

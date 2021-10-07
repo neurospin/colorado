@@ -93,11 +93,9 @@ def draw_as_mesh(data, gaussian_blur_FWWM=0, threshold_quantile=0, labels=None, 
             raise ValueError(
                 "numpy object are ambiguous. use colorado.aims_tools functions to convert them into aims objects")
         elif _is_aims_volume(obj):
-            data[name] = aims_tools.volume_to_mesh(
-                obj, gaussian_blur_FWWM=gaussian_blur_FWWM, threshold_quantile=threshold_quantile)
+            data[name] = aims_tools.volume_to_mesh(obj)
         elif isinstance(obj, _aims.BucketMap_VOID.Bucket):
-            data[name] = aims_tools.bucket_to_mesh(
-                obj, gaussian_blur_FWWM=gaussian_blur_FWWM, threshold_quantile=threshold_quantile)
+            data[name] = aims_tools.bucket_to_mesh(obj)
         elif isinstance(obj, _aims.AimsTimeSurface_3_VOID) or isinstance(obj, PyMesh):
             # it's already a mesh
             pass
