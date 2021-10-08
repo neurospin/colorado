@@ -119,7 +119,8 @@ _drawing_functions = {
     PyMeshFrame: draw_pyMesh,
     _aims.Volume_S16: get_volume_g_o,
     numpy.ndarray: _raise_numpy_error,
-    _aims.BucketMap_VOID: get_aims_bucket_map_g_o
+    _aims.BucketMap_VOID: get_aims_bucket_map_g_o,
+    _aims.rc_ptr_BucketMap_VOID: get_aims_bucket_map_g_o
 }
 
 
