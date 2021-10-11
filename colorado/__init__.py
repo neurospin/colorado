@@ -4,7 +4,7 @@ import numpy
 from .anatomist_tools import anatomist_snatpshot
 from .bucket import get_aims_bucket_g_o, draw_numpy_bucket, draw_numpy_buckets, get_aims_bucket_map_g_o
 from .mesh import get_aims_mesh_g_o, draw_pyMesh, draw_meshes_in_subplots, draw_numpy_meshes
-from .volume import draw_volume, get_volume_g_o, draw_volumes
+from .volume import draw_volume, get_volume_g_o, draw_volumes, get_bucket_g_o
 from re import match as _re_match
 
 from .aims_tools import PyMesh, PyMeshFrame, bucket_to_aligned_mesh, bucket_to_mesh, volume_to_mesh
@@ -14,6 +14,8 @@ import numpy
 
 from soma import aims as _aims
 
+import logging
+log = logging.getLogger(__name__)
 
 def new_figure(*args, **kwargs):
     """Create a new Figure"""
@@ -49,6 +51,7 @@ def draw(data, fig=None, labels=None, shift=(0, 0, 0), draw_function=None, draw_
             f = _get_draw_function(obj)
         else:
             f = draw_function
+
         trace = f(obj, name=name, shift=shift*i, **draw_f_args, **kwargs)
 
         if isinstance(trace, plotly.basedatatypes.BaseTraceHierarchyType):
@@ -107,10 +110,18 @@ def draw_as_mesh(data, gaussian_blur_FWWM=0, threshold_quantile=0, labels=None, 
     return draw(data, shift=shift, **kwargs)
 
 
-def _raise_numpy_error(obj, name, shift, **kwargs):
-    raise ValueError(
-        "numpy object are ambiguous and can not be drawn. Use a specific function (e.g. colorado.draw_volume)")
+def _process_numpy_object(obj, name, shift, **kwargs):
+    # raise ValueError(
+    #     "numpy object are ambiguous and can not be drawn. Use a specific function (e.g. colorado.draw_volume)")
+    log.warning("Numpy object are ambiguous. Use a specific function (e.g. colorado.draw_volume)")
+    if len(obj.shape) == 2 and obj.shape[1] == 3:
+        f = get_bucket_g_o
+    elif len(obj.shape) == 3:
+        f = get_volume_g_o
+    else:
+        raise ValueError("Could not interpretate numpy object neither as bucket (n,3) nor as 3D volume (l,m,n).")
 
+    return f(obj, name=name, shift=shift, **kwargs)
 
 _drawing_functions = {
     _aims.AimsTimeSurface_3_VOID: get_aims_mesh_g_o,
@@ -118,7 +129,7 @@ _drawing_functions = {
     PyMesh: draw_pyMesh,
     PyMeshFrame: draw_pyMesh,
     _aims.Volume_S16: get_volume_g_o,
-    numpy.ndarray: _raise_numpy_error,
+    numpy.ndarray: _process_numpy_object,
     _aims.BucketMap_VOID: get_aims_bucket_map_g_o,
     _aims.rc_ptr_BucketMap_VOID: get_aims_bucket_map_g_o
 }

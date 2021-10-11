@@ -6,6 +6,17 @@ import logging
 log = logging.getLogger(__name__)
 
 
+def _get_marker_kwarg_for_scatterplot(**kwargs):
+    # set default marker properties from otional arguments
+    marker = kwargs.get("marker", dict())
+    opacity = marker.get('opacity', 1)
+    if opacity < 1:
+        log.warning("Opacity < 1 is buggy in Plotly 3D Scatter plot")
+
+    marker['opacity'] = opacity
+    marker['size'] = marker.get('size', 1)
+    return marker
+
 def get_bucket_g_o(bucket, name=None, shift=(0, 0, 0), **kwargs):
 
     if bucket.shape[1] != 3:
@@ -15,14 +26,7 @@ def get_bucket_g_o(bucket, name=None, shift=(0, 0, 0), **kwargs):
     bucket = bucket+shift
     x, y, z = bucket.T
 
-    # set default marker properties from otional arguments
-    marker = kwargs.get("marker", dict())
-    opacity = marker.get('opacity', 1)
-    if opacity < 1:
-        log.warning("Opacity < 1 is buggy in Plotly 3D Scatter plot")
-
-    marker['opacity'] = opacity
-    marker['size'] = marker.get('size', 1)
+    marker = _get_marker_kwarg_for_scatterplot(**kwargs)
 
     s3d = go.Scatter3d(
         x=x, y=y, z=z, mode='markers',
@@ -49,7 +53,7 @@ def get_aims_bucket_map_g_o(aims_bucket_map, name=None, shift=(0, 0, 0), **kwarg
     return buckets_g_o
 
 
-def draw_numpy_bucket(bucket, fig=None):
+def draw_numpy_bucket(bucket,*, fig=None **kwargs):
     """Draw one bucket from numpy array
 
     Args:
@@ -58,15 +62,27 @@ def draw_numpy_bucket(bucket, fig=None):
     Returns:
         plotly.graphic_objects.Figure: a plotly figure representing the bucket
     """
+
     assert bucket.shape[1] == 3,\
         "wrong shape: expected (N,3) got {}".format(bucket.shape)
-    x, y, z = bucket.T
+
+    # if shift is not None:
+    #     shift = numpy.array(shift).reshape(1,3)
+    # else:
+    #     shift = numpy.zeros(3)
+    
+    x, y, z = (bucket).T
+    print(fig)
     if fig is None:
         fig = go.Figure()
+
+    marker = _get_marker_kwarg_for_scatterplot(**kwargs)
+
     fig.add_trace(
-        go.Scatter3d(x=x, y=y, z=z, mode='markers',
-                     marker=dict(size=1, opacity=1)
-                     )
+        go.Scatter3d(x=x, y=y, z=z,
+        mode='markers',
+        marker=marker,
+        name = kwargs.get('name',None))
     )
     return fig
 
