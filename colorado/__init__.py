@@ -7,8 +7,8 @@ from .mesh import get_aims_mesh_g_o, draw_pyMesh, draw_meshes_in_subplots, draw_
 from .volume import draw_volume, get_volume_g_o, draw_volumes, get_bucket_g_o
 from re import match as _re_match
 
-from .aims_tools import PyMesh, PyMeshFrame, bucket_to_aligned_mesh, bucket_to_mesh, volume_to_mesh
-from . import aims_tools
+from dico_toolbox.aims_tools import PyMesh, PyMeshFrame, bucket_to_aligned_mesh, bucket_to_mesh, volume_to_mesh
+from dico_toolbox import aims_tools
 
 import numpy
 
@@ -52,7 +52,7 @@ def draw(data, fig=None, labels=None, shift=(0, 0, 0), draw_function=None, draw_
         else:
             f = draw_function
 
-        trace = f(obj, name=name, shift=shift*i, **draw_f_args, **kwargs)
+        trace = f(obj, shift=shift*i, **draw_f_args, **kwargs)
 
         if isinstance(trace, plotly.basedatatypes.BaseTraceHierarchyType):
             fig.add_trace(trace)
@@ -94,7 +94,7 @@ def draw_as_mesh(data, gaussian_blur_FWWM=0, threshold_quantile=0, labels=None, 
     for name, obj in data.items():
         if isinstance(data, numpy.ndarray):
             raise ValueError(
-                "numpy object are ambiguous. use colorado.aims_tools functions to convert them into aims objects")
+                "numpy object are ambiguous. It may be safer to unse a dedicated function (e.g. draw_numpy_bucket)")
         elif _is_aims_volume(obj):
             data[name] = aims_tools.volume_to_mesh(obj)
         elif isinstance(obj, _aims.BucketMap_VOID.Bucket):
@@ -110,7 +110,7 @@ def draw_as_mesh(data, gaussian_blur_FWWM=0, threshold_quantile=0, labels=None, 
     return draw(data, shift=shift, **kwargs)
 
 
-def _process_numpy_object(obj, name, shift, **kwargs):
+def _process_numpy_object(obj, **kwargs):
     # raise ValueError(
     #     "numpy object are ambiguous and can not be drawn. Use a specific function (e.g. colorado.draw_volume)")
     log.warning("Numpy object are ambiguous. Use a specific function (e.g. colorado.draw_volume)")
@@ -121,7 +121,7 @@ def _process_numpy_object(obj, name, shift, **kwargs):
     else:
         raise ValueError("Could not interpretate numpy object neither as bucket (n,3) nor as 3D volume (l,m,n).")
 
-    return f(obj, name=name, shift=shift, **kwargs)
+    return f(obj, **kwargs)
 
 _drawing_functions = {
     _aims.AimsTimeSurface_3_VOID: get_aims_mesh_g_o,

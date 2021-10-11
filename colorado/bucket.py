@@ -1,7 +1,7 @@
 import numpy
 from typing import Sequence
 import plotly.graph_objects as go
-from .aims_tools import bucket_aims_to_ndarray
+from dico_toolbox.aims_tools import bucket_aims_to_ndarray
 import logging
 log = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ def _get_marker_kwarg_for_scatterplot(**kwargs):
     marker['size'] = marker.get('size', 1)
     return marker
 
-def get_bucket_g_o(bucket, name=None, shift=(0, 0, 0), **kwargs):
+def get_bucket_g_o(bucket, shift=(0, 0, 0), **kwargs):
 
     if bucket.shape[1] != 3:
         raise ValueError(
@@ -31,29 +31,29 @@ def get_bucket_g_o(bucket, name=None, shift=(0, 0, 0), **kwargs):
     s3d = go.Scatter3d(
         x=x, y=y, z=z, mode='markers',
         marker=marker,
-        name=name,
+        name=kwargs.get('name',None),
     )
 
     return s3d
 
 
-def get_aims_bucket_g_o(aims_bucket, name=None, shift=(0, 0, 0), **kwargs):
+def get_aims_bucket_g_o(aims_bucket, shift=(0, 0, 0), **kwargs):
     """Plot a soma.aims Bucket"""
     bucket = bucket_aims_to_ndarray(aims_bucket) + shift
-    return get_bucket_g_o(bucket, name=name, **kwargs)
+    return get_bucket_g_o(bucket, **kwargs)
 
 
-def get_aims_bucket_map_g_o(aims_bucket_map, name=None, shift=(0, 0, 0), **kwargs):
+def get_aims_bucket_map_g_o(aims_bucket_map, shift=(0, 0, 0), **kwargs):
     """Draw a bucketMap object, which is obtained with aims.read() on .bck files"""
     buckets_g_o = list()
     for aims_bucket in aims_bucket_map:
         buckets_g_o.append(get_aims_bucket_g_o(
-            aims_bucket, name=name, shift=(0, 0, 0), **kwargs))
+            aims_bucket, shift=(0, 0, 0), **kwargs))
 
     return buckets_g_o
 
 
-def draw_numpy_bucket(bucket,*, fig=None **kwargs):
+def draw_numpy_bucket(bucket,*, fig=None, **kwargs):
     """Draw one bucket from numpy array
 
     Args:

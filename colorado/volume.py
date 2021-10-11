@@ -1,6 +1,6 @@
 from numpy.core import numeric
 from numpy.lib.shape_base import _make_along_axis_idx
-from . import aims_tools
+from dico_toolbox import aims_tools
 from .bucket import get_bucket_g_o
 import numpy as np
 import plotly.graph_objects as go
