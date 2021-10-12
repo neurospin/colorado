@@ -1,5 +1,5 @@
 from numpy.lib.polynomial import poly
-from dico_toolbox.aims_tools import PyMesh
+from dico_toolbox.wrappers import PyMesh
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -49,7 +49,7 @@ def get_aims_mesh_g_o(mesh, shift=(0, 0, 0), **kwargs):
         vertices = mesh.vertices
         polygons = mesh.polygons
 
-    return get_mesh3d_g_o(vertices, polygons, name=kwargs.get('name',None), shift=shift, **kwargs)
+    return get_mesh3d_g_o(vertices, polygons, shift=shift, **kwargs)
 
 
 def draw_meshes_in_subplots(mesh_list, cols=3):

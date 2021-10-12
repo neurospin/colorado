@@ -1,7 +1,7 @@
 import numpy
 from typing import Sequence
 import plotly.graph_objects as go
-from dico_toolbox.aims_tools import bucket_aims_to_ndarray
+from dico_toolbox.aims_tools import bucket_aims_to_ndarray, bucketMAP_aims_to_ndarray
 import logging
 log = logging.getLogger(__name__)
 
@@ -39,18 +39,18 @@ def get_bucket_g_o(bucket, shift=(0, 0, 0), **kwargs):
 
 def get_aims_bucket_g_o(aims_bucket, shift=(0, 0, 0), **kwargs):
     """Plot a soma.aims Bucket"""
+    log.warning("When drawing an aims bucket, the voxel size is not considered. Draw its BucketMap instead.")
     bucket = bucket_aims_to_ndarray(aims_bucket) + shift
-    return get_bucket_g_o(bucket, **kwargs)
+    return get_bucket_g_o(bucket, shift=shift, **kwargs)
 
 
 def get_aims_bucket_map_g_o(aims_bucket_map, shift=(0, 0, 0), **kwargs):
-    """Draw a bucketMap object, which is obtained with aims.read() on .bck files"""
-    buckets_g_o = list()
-    for aims_bucket in aims_bucket_map:
-        buckets_g_o.append(get_aims_bucket_g_o(
-            aims_bucket, shift=(0, 0, 0), **kwargs))
-
-    return buckets_g_o
+    """Draw thea bucketMap object, which is obtained with aims.read() on .bck files
+    The coordinates are scaled according to the voxel size of the MAP."""
+    if len(aims_bucket_map) > 1 :
+        log.warining("The bucketMAP contains more than one buckets. Only the first will be drawn.")
+    bck = bucketMAP_aims_to_ndarray(aims_bucket_map)
+    return get_bucket_g_o(bck, shift=shift, **kwargs)
 
 
 def draw_numpy_bucket(bucket,*, fig=None, **kwargs):

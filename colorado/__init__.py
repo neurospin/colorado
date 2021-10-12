@@ -1,17 +1,13 @@
 from numpy.lib.arraysetops import isin
 import plotly
-import numpy
+import numpy as _np
 from .anatomist_tools import anatomist_snatpshot
 from .bucket import get_aims_bucket_g_o, draw_numpy_bucket, draw_numpy_buckets, get_aims_bucket_map_g_o
 from .mesh import get_aims_mesh_g_o, draw_pyMesh, draw_meshes_in_subplots, draw_numpy_meshes
 from .volume import draw_volume, get_volume_g_o, draw_volumes, get_bucket_g_o
 from re import match as _re_match
 
-from dico_toolbox.aims_tools import PyMesh, PyMeshFrame, bucket_to_aligned_mesh, bucket_to_mesh, volume_to_mesh
-from dico_toolbox import aims_tools
-
-import numpy
-
+import dico_toolbox as _dt
 from soma import aims as _aims
 
 import logging
@@ -22,15 +18,15 @@ def new_figure(*args, **kwargs):
     return plotly.graph_objs.Figure(*args, **kwargs)
 
 
-def draw(data, fig=None, labels=None, shift=(0, 0, 0), draw_function=None, draw_f_args=dict(), **kwargs):
+def draw(*args, fig=None, label=None, shift=(0, 0, 0), draw_function=None, draw_f_args=dict(), **kwargs):
     """Draw objects with plotly
 
-    :param data: an object or a list of objects. Object can be an aims bucket, an aims Mesh or a PyMesh
-    :type data: soma.aims mesh/volume/bucket 
+    :param data: drawable objects or an iterable of drawable objects.
+    :type data: soma.aims mesh/volume/bucket or numpy array
     :param fig: the plotly figure, if None, one is created, defaults to None
     :type fig: plotly.graph_objects.Figure, optional
-    :param labels: an array of labels for the data if data is a list, defaults to None
-    :type labels: list[str], optional
+    :param label: a string or an iterable of labels for the data.
+    :type label: list[str], optional
     :param shift: shift the plots in data each by (x,y,z), defaults to (0,0,0)
     :type shift: tuple, optional
     :return: a plotly figure
@@ -38,12 +34,12 @@ def draw(data, fig=None, labels=None, shift=(0, 0, 0), draw_function=None, draw_
     """
 
     # create a labeled dict of objects to draw
-    data = _data_to_dict(data, labels)
+    data = _data_to_dict(args, label)
 
     if fig is None:
         fig = plotly.graph_objects.Figure()
 
-    shift = numpy.array(shift)
+    shift = _np.array(shift)
 
     for i, (name, obj) in enumerate(data.items()):
 
@@ -51,6 +47,8 @@ def draw(data, fig=None, labels=None, shift=(0, 0, 0), draw_function=None, draw_
             f = _get_draw_function(obj)
         else:
             f = draw_function
+        
+        kwargs["name"] = name
 
         trace = f(obj, shift=shift*i, **draw_f_args, **kwargs)
 
@@ -67,22 +65,38 @@ def draw(data, fig=None, labels=None, shift=(0, 0, 0), draw_function=None, draw_
                 raise ValueError("Drawing Error")
 
     fig.update_layout(legend={'itemsizing': 'constant'})
+    fig.update_layout(scene_aspectmode='data')
 
     return fig
 
 
-def _data_to_dict(data, labels):
-    # check if the object is iterable
-    if not isinstance(data, dict):
-        # Check for instance of list instead iterability because
-        # aims Volumes is an iterable
-        if not isinstance(data, list):
-            data = [data]
-        if labels is None:
-            labels = ["trace {}".format(x) for x in range(len(data))]
-        assert len(data) == len(labels)
-        data = dict(zip(labels, data))
+def _is_drawable(obj):
+    return type(obj) in _drawing_functions.keys()
 
+def _data_to_dict(data, label):
+    """Create a {label:graphicObject} dictionary"""
+    assert(type(data) == tuple)
+    # NOTE: aims Volumes is an iterable!
+    if len(data) == 1:
+        if isinstance(data[0], dict):
+            # data is one dictionary
+            pass
+        elif type(data[0]) in (tuple, list):
+            # data is one list/tuple
+            if label is None:
+                label = ["trace {}".format(x) for x in range(len(data[0]))]
+            data = dict(zip(label, data[0]))
+        else:
+            # data is one object (not list/tuple/dict)
+            data = {label : data[0]}
+    else:
+        # the user gave more than one argument
+        assert( all([type(d) not in [list, tuple, dict] for d in data]))
+        if label is None:
+            label = ["trace {}".format(x) for x in range(len(data))]
+        assert len(data) == len(label)
+        data = dict(zip(label, data))
+    
     return data
 
 
@@ -96,10 +110,10 @@ def draw_as_mesh(data, gaussian_blur_FWWM=0, threshold_quantile=0, labels=None, 
             raise ValueError(
                 "numpy object are ambiguous. It may be safer to unse a dedicated function (e.g. draw_numpy_bucket)")
         elif _is_aims_volume(obj):
-            data[name] = aims_tools.volume_to_mesh(obj)
+            data[name] = _dt.convert.volume_to_mesh(obj)
         elif isinstance(obj, _aims.BucketMap_VOID.Bucket):
-            data[name] = aims_tools.bucket_to_mesh(obj)
-        elif isinstance(obj, _aims.AimsTimeSurface_3_VOID) or isinstance(obj, PyMesh):
+            data[name] = _dt.convert.bucket_to_mesh(obj)
+        elif isinstance(obj, _aims.AimsTimeSurface_3_VOID) or isinstance(obj, _dt.wrappers.PyMesh):
             # it's already a mesh
             pass
         else:
@@ -119,17 +133,17 @@ def _process_numpy_object(obj, **kwargs):
     elif len(obj.shape) == 3:
         f = get_volume_g_o
     else:
-        raise ValueError("Could not interpretate numpy object neither as bucket (n,3) nor as 3D volume (l,m,n).")
+        raise ValueError(f"Could not interpretate numpy object of shape {obj.shape} as bucket or volume.")
 
     return f(obj, **kwargs)
 
 _drawing_functions = {
     _aims.AimsTimeSurface_3_VOID: get_aims_mesh_g_o,
     _aims.BucketMap_VOID.Bucket: get_aims_bucket_g_o,
-    PyMesh: draw_pyMesh,
-    PyMeshFrame: draw_pyMesh,
+    _dt.wrappers.PyMesh: draw_pyMesh,
+    _dt.wrappers.PyMeshFrame: draw_pyMesh,
     _aims.Volume_S16: get_volume_g_o,
-    numpy.ndarray: _process_numpy_object,
+    _np.ndarray: _process_numpy_object,
     _aims.BucketMap_VOID: get_aims_bucket_map_g_o,
     _aims.rc_ptr_BucketMap_VOID: get_aims_bucket_map_g_o
 }
