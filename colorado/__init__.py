@@ -127,7 +127,7 @@ def draw_as_mesh(data, gaussian_blur_FWWM=0, threshold_quantile=0, labels=None, 
 def _process_numpy_object(obj, **kwargs):
     # raise ValueError(
     #     "numpy object are ambiguous and can not be drawn. Use a specific function (e.g. colorado.draw_volume)")
-    log.warning("Numpy object are ambiguous. Use a specific function (e.g. colorado.draw_volume)")
+    log.debug("Numpy object are ambiguous. Use a specific function (e.g. colorado.draw_volume)")
     if len(obj.shape) == 2 and obj.shape[1] == 3:
         f = get_bucket_g_o
     elif len(obj.shape) == 3:

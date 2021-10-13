@@ -39,7 +39,7 @@ def get_bucket_g_o(bucket, shift=(0, 0, 0), **kwargs):
 
 def get_aims_bucket_g_o(aims_bucket, shift=(0, 0, 0), **kwargs):
     """Plot a soma.aims Bucket"""
-    log.warning("When drawing an aims bucket, the voxel size is not considered. Draw its BucketMap instead.")
+    log.debug("When drawing an aims bucket, the voxel size is not considered. Draw its BucketMap instead.")
     bucket = bucket_aims_to_ndarray(aims_bucket) + shift
     return get_bucket_g_o(bucket, shift=shift, **kwargs)
 
