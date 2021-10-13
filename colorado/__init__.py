@@ -149,6 +149,8 @@ _drawing_functions = {
     _dt.wrappers.PyMesh: draw_pyMesh,
     _dt.wrappers.PyMeshFrame: draw_pyMesh,
     _aims.Volume_S16: get_volume_g_o,
+    _aims.rc_ptr_Volume_S16: get_volume_g_o,
+    _aims.rc_ptr_Volume_FLOAT: get_volume_g_o,
     _np.ndarray: _process_numpy_object,
     _aims.BucketMap_VOID: get_aims_bucket_map_g_o,
     _aims.rc_ptr_BucketMap_VOID: get_aims_bucket_map_g_o
