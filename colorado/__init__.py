@@ -18,7 +18,7 @@ def new_figure(*args, **kwargs):
     return plotly.graph_objs.Figure(*args, **kwargs)
 
 
-def draw(*args, fig=None, label=None, shift=(0, 0, 0), draw_function=None, draw_f_args=dict(), **kwargs):
+def draw(*args, fig=None, label=None, shift=(0, 0, 0), draw_function=None, draw_f_args=dict(), title="", **kwargs):
     """Draw objects with plotly
 
     :param data: drawable objects or an iterable of drawable objects.
@@ -64,8 +64,14 @@ def draw(*args, fig=None, label=None, shift=(0, 0, 0), draw_function=None, draw_
                 # raise
                 raise ValueError("Drawing Error")
 
-    fig.update_layout(legend={'itemsizing': 'constant'})
-    fig.update_layout(scene_aspectmode='data')
+    fig.update_layout(
+        scene_aspectmode='data',
+        scene_camera = dict(eye=dict(x=-0.8, y=0, z=2)),
+        legend={'itemsizing': 'constant'},
+        title=title
+    )
+
+    # fig.update_scenes(aspectratio=dict(x=1, y=5, z=1))
 
     return fig
 
@@ -80,7 +86,7 @@ def _data_to_dict(data, label):
     if len(data) == 1:
         if isinstance(data[0], dict):
             # data is one dictionary
-            pass
+            return data[0]
         elif type(data[0]) in (tuple, list):
             # data is one list/tuple
             if label is None:
