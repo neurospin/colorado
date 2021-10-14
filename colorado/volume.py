@@ -1,6 +1,5 @@
 from numpy.core import numeric
-from numpy.lib.shape_base import _make_along_axis_idx
-from dico_toolbox import aims_tools
+from dico_toolbox import _aims_tools
 from .bucket import get_bucket_g_o
 import numpy as np
 import plotly.graph_objects as go
@@ -27,7 +26,7 @@ def get_volume_g_o(volume,
     Returns:
         plotly.grapthic_object: a gtaphic object to be added to a plotly figure
     """
-    avol = aims_tools.volume_to_ndarray(volume).copy()
+    avol = _aims_tools.volume_to_ndarray(volume).copy()
 
     # apply threshold
     if th_min is not None:
@@ -42,7 +41,7 @@ def get_volume_g_o(volume,
              ::downsample] = avol[::downsample, ::downsample, ::downsample]
         avol = temp
 
-    abucket = aims_tools.volume_to_bucket_numpy(avol)
+    abucket = _aims_tools.volume_to_bucket_numpy(avol)
 
     # limit number of points
     if len(abucket) > max_points:

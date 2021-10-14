@@ -1,7 +1,7 @@
 import numpy
 from typing import Sequence
 import plotly.graph_objects as go
-from dico_toolbox.aims_tools import bucket_aims_to_ndarray, bucketMAP_aims_to_ndarray
+from dico_toolbox.convert import bucket_aims_to_ndarray, bucketMAP_aims_to_ndarray
 import logging
 log = logging.getLogger(__name__)
 

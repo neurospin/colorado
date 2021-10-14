@@ -7,7 +7,7 @@ from .mesh import get_aims_mesh_g_o, draw_pyMesh, draw_meshes_in_subplots, draw_
 from .volume import draw_volume, get_volume_g_o, draw_volumes, get_bucket_g_o
 from re import match as _re_match
 
-import dico_toolbox as _dt
+import dico_toolbox as _dtb
 from soma import aims as _aims
 
 import logging
@@ -112,14 +112,14 @@ def draw_as_mesh(data, gaussian_blur_FWWM=0, threshold_quantile=0, labels=None, 
     data = _data_to_dict(data, labels)
 
     for name, obj in data.items():
-        if isinstance(data, numpy.ndarray):
+        if isinstance(data, _np.ndarray):
             raise ValueError(
                 "numpy object are ambiguous. It may be safer to unse a dedicated function (e.g. draw_numpy_bucket)")
         elif _is_aims_volume(obj):
-            data[name] = _dt.convert.volume_to_mesh(obj)
+            data[name] = _dtb.convert.volume_to_mesh(obj)
         elif isinstance(obj, _aims.BucketMap_VOID.Bucket):
-            data[name] = _dt.convert.bucket_to_mesh(obj)
-        elif isinstance(obj, _aims.AimsTimeSurface_3_VOID) or isinstance(obj, _dt.wrappers.PyMesh):
+            data[name] = _dtb.convert.bucket_to_mesh(obj)
+        elif isinstance(obj, _aims.AimsTimeSurface_3_VOID) or isinstance(obj, _dtb.wrappers.PyMesh):
             # it's already a mesh
             pass
         else:
@@ -146,8 +146,8 @@ def _process_numpy_object(obj, **kwargs):
 _drawing_functions = {
     _aims.AimsTimeSurface_3_VOID: get_aims_mesh_g_o,
     _aims.BucketMap_VOID.Bucket: get_aims_bucket_g_o,
-    _dt.wrappers.PyMesh: draw_pyMesh,
-    _dt.wrappers.PyMeshFrame: draw_pyMesh,
+    _dtb.wrappers.PyMesh: draw_pyMesh,
+    _dtb.wrappers.PyMeshFrame: draw_pyMesh,
     _aims.Volume_S16: get_volume_g_o,
     _aims.rc_ptr_Volume_S16: get_volume_g_o,
     _aims.rc_ptr_Volume_FLOAT: get_volume_g_o,
