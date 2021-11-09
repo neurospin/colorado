@@ -1,12 +1,12 @@
 from numpy.lib.polynomial import poly
-from .aims_tools import PyMesh
+from dico_toolbox.wrappers import PyMesh
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from soma import aims as _aims
 
 
-def get_mesh3d_g_o(vertices, polygons, name=None, shift=(0, 0, 0), **kwargs):
+def get_mesh3d_g_o(vertices, polygons, shift=(0, 0, 0), **kwargs):
     """Get an plotly graphic object from numpy arrays
 
     Args:
@@ -33,11 +33,11 @@ def get_mesh3d_g_o(vertices, polygons, name=None, shift=(0, 0, 0), **kwargs):
         color=color,
         lighting=go.mesh3d.Lighting(ambient=0.1,),
         lightposition=go.mesh3d.Lightposition(x=0, y=0, z=0),
-        name=name
+        name=kwargs.get('name',None)
     )
 
 
-def get_aims_mesh_g_o(mesh, name=None, shift=(0, 0, 0), **kwargs):
+def get_aims_mesh_g_o(mesh, shift=(0, 0, 0), **kwargs):
     """Get a plotly graphic object from an aims mesh"""
     if mesh.__class__.__name__ != "PyMeshFrame":
         if isinstance(mesh, PyMesh):
@@ -49,7 +49,7 @@ def get_aims_mesh_g_o(mesh, name=None, shift=(0, 0, 0), **kwargs):
         vertices = mesh.vertices
         polygons = mesh.polygons
 
-    return get_mesh3d_g_o(vertices, polygons, name=name, shift=shift, **kwargs)
+    return get_mesh3d_g_o(vertices, polygons, shift=shift, **kwargs)
 
 
 def draw_meshes_in_subplots(mesh_list, cols=3):

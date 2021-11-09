@@ -1,5 +1,5 @@
 import numpy as _np
-from .aims_tools import ndarray_to_aims_volume as _ndarray_to_aims_volume
+from dico_toolbox.convert import ndarray_to_aims_volume as _ndarray_to_aims_volume
 
 
 def sphere(n):

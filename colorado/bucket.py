@@ -1,10 +1,23 @@
 import numpy
 from typing import Sequence
 import plotly.graph_objects as go
-from .aims_tools import bucket_aims_to_ndarray
+from dico_toolbox.convert import bucket_aims_to_ndarray, bucketMAP_aims_to_ndarray
+import logging
+log = logging.getLogger(__name__)
 
 
-def get_bucket_g_o(bucket, name=None, marker_kwargs=dict(opacity=1), shift=(0, 0, 0), **kwargs):
+def _get_marker_kwarg_for_scatterplot(**kwargs):
+    # set default marker properties from otional arguments
+    marker = kwargs.get("marker", dict())
+    opacity = marker.get('opacity', 1)
+    if opacity < 1:
+        log.warning("Opacity < 1 is buggy in Plotly 3D Scatter plot")
+
+    marker['opacity'] = opacity
+    marker['size'] = marker.get('size', 1)
+    return marker
+
+def get_bucket_g_o(bucket, shift=(0, 0, 0), **kwargs):
 
     if bucket.shape[1] != 3:
         raise ValueError(
@@ -13,32 +26,34 @@ def get_bucket_g_o(bucket, name=None, marker_kwargs=dict(opacity=1), shift=(0, 0
     bucket = bucket+shift
     x, y, z = bucket.T
 
+    marker = _get_marker_kwarg_for_scatterplot(**kwargs)
+
     s3d = go.Scatter3d(
         x=x, y=y, z=z, mode='markers',
-        marker=dict(size=1, **marker_kwargs),
-        name=name,
+        marker=marker,
+        name=kwargs.get('name',None),
     )
 
     return s3d
 
 
-def get_aims_bucket_g_o(aims_bucket, name=None, shift=(0, 0, 0), **kwargs):
+def get_aims_bucket_g_o(aims_bucket, shift=(0, 0, 0), **kwargs):
     """Plot a soma.aims Bucket"""
+    log.debug("When drawing an aims bucket, the voxel size is not considered. Draw its BucketMap instead.")
     bucket = bucket_aims_to_ndarray(aims_bucket) + shift
-    return get_bucket_g_o(bucket, name=name, **kwargs)
+    return get_bucket_g_o(bucket, shift=shift, **kwargs)
 
 
-def get_aims_bucket_map_g_o(aims_bucket_map, name=None, shift=(0, 0, 0), **kwargs):
-    """Draw a bucketMap object, which is obtained with aims.read() on .bck files"""
-    buckets_g_o = list()
-    for aims_bucket in aims_bucket_map:
-        buckets_g_o.append(get_aims_bucket_g_o(
-            aims_bucket, name=name, shift=(0, 0, 0), **kwargs))
+def get_aims_bucket_map_g_o(aims_bucket_map, shift=(0, 0, 0), **kwargs):
+    """Draw thea bucketMap object, which is obtained with aims.read() on .bck files
+    The coordinates are scaled according to the voxel size of the MAP."""
+    if len(aims_bucket_map) > 1 :
+        log.warining("The bucketMAP contains more than one buckets. Only the first will be drawn.")
+    bck = bucketMAP_aims_to_ndarray(aims_bucket_map)
+    return get_bucket_g_o(bck, shift=shift, **kwargs)
 
-    return buckets_g_o
 
-
-def draw_numpy_bucket(bucket, fig=None):
+def draw_numpy_bucket(bucket,*, fig=None, **kwargs):
     """Draw one bucket from numpy array
 
     Args:
@@ -47,15 +62,27 @@ def draw_numpy_bucket(bucket, fig=None):
     Returns:
         plotly.graphic_objects.Figure: a plotly figure representing the bucket
     """
+
     assert bucket.shape[1] == 3,\
         "wrong shape: expected (N,3) got {}".format(bucket.shape)
-    x, y, z = bucket.T
+
+    # if shift is not None:
+    #     shift = numpy.array(shift).reshape(1,3)
+    # else:
+    #     shift = numpy.zeros(3)
+    
+    x, y, z = (bucket).T
+    print(fig)
     if fig is None:
         fig = go.Figure()
+
+    marker = _get_marker_kwarg_for_scatterplot(**kwargs)
+
     fig.add_trace(
-        go.Scatter3d(x=x, y=y, z=z, mode='markers',
-                     marker=dict(size=1, opacity=1)
-                     )
+        go.Scatter3d(x=x, y=y, z=z,
+        mode='markers',
+        marker=marker,
+        name = kwargs.get('name',None))
     )
     return fig
 

@@ -43,5 +43,5 @@ $ ./install_node.sh
 
 
 ### Resources
-* [simple example](https://neurospin.github.io/colorado/tutorial/tutorial.html) The example data are in `docs/tutorial/data`
+* [simple example](https://neurospin.github.io/colorado/build/html/tutorials.html) The example data are in `docs/tutorial/data`
 * [documentation](https://neurospin.github.io/colorado/build/html/colorado.html#module-colorado)
