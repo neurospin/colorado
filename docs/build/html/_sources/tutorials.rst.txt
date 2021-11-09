@@ -1,0 +1,9 @@
+Tutorials
+==========
+
+
+Basic usage in a Jupyter Notebook: https://neurospin.github.io/colorado/tutorial/basic_plotting.html
+
+Plotting many entities in the same plot: https://neurospin.github.io/colorado/tutorial/multy_entity_plot.html
+
+Anatomist screenshot: https://neurospin.github.io/colorado/tutorial/anatomist_screenshot.html
