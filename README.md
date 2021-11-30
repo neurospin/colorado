@@ -1,6 +1,9 @@
 # Colorado
 
-## Plot pyAims entities in Python Notebooks.
+## Plot point-clouds, volumes and meshes in Python Notebooks.
+
+Colorado meakes it easy to plot 3D data in Jupyter-Notebooks.
+Data can be represented as numpy arrays or pyAims entities. Colorado's `draw` function recognises the data type and choses the best representation for you.
 
 ```{python}
 import colorado as cld
