@@ -3,19 +3,21 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-setuptools.setup(name='Colorado',
-                 version='0.2.0',
-                 description="A plotly interface for pyAims (brain images)",
-                 author='Marco Pascucci',
+release_info = {}
+python_dir = os.path.dirname(__file__)
+with open(os.path.join(python_dir, "colorado", "info.py")) as f:
+    code = f.read()
+    exec(code, release_info)
+
+setuptools.setup(name=release_info['NAME'],
+                 version=release_info['__version__'],
+                 description=release_info['DESCRIPTION'],
+                 author=release_info['AUTHOR'],
+                 author_email=release_info['AUTHOR_EMAIL']
                  long_description=long_description,
                  long_description_content_type="text/markdown",
-                 author_email='marpas.paris@gmail.com',
-                 url='',
+                 url=release_info['URL'],
                  packages=['colorado'],
-                 install_requires=['plotly', 'numpy', 'dico_toolbox'],
-                 classifiers=[
-                     "Programming Language :: Python",
-                     "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
-                     "Operating System :: OS Independent",
-                 ]
+                 install_requires=release_info["REQUIRES"],
+                 classifiers=release_info["CLASSIFIERS"]
                  )
