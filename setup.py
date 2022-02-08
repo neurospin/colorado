@@ -1,4 +1,5 @@
 import setuptools
+import os
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -13,7 +14,7 @@ setuptools.setup(name=release_info['NAME'],
                  version=release_info['__version__'],
                  description=release_info['DESCRIPTION'],
                  author=release_info['AUTHOR'],
-                 author_email=release_info['AUTHOR_EMAIL']
+                 author_email=release_info['AUTHOR_EMAIL'],
                  long_description=long_description,
                  long_description_content_type="text/markdown",
                  url=release_info['URL'],
