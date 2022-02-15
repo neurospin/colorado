@@ -1,5 +1,4 @@
 import numpy as _np
-from dico_toolbox.convert import ndarray_to_aims_volume as _ndarray_to_aims_volume
 
 
 def sphere(n):
@@ -8,6 +7,4 @@ def sphere(n):
     R2 = X**2+Y**2+Z**2
     vol = 1/_np.sqrt(R2)
     vol[vol < 1] = 0
-    vol = _ndarray_to_aims_volume(vol)
-
     return vol
