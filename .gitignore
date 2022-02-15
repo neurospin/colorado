@@ -8,3 +8,7 @@ __pycache__/
 scripts/
 
 *.ipynb
+*.ipynb_checkpoints
+
+docs/build
+docs/tutorial/notebooks
