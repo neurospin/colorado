@@ -27,10 +27,9 @@ meshL = aims.read('../docs/tutorial/data/subject01_Lhemi.mesh')
 cld.draw([meshL, meshR])
 ```
 
-![image](docs/images/brain.jpg)
+![image](docs/tutorial/markdown/readme/Readme_files/brain.jpg)
 
-The `colorado`plotlyule is simply glue between `numpy` and `plotly`, but it also allows to plot aims objects (buckets volumes and meshes) in a 
-[Brainvisa](https://brainvisa.info/web/) environment.
+The `colorado` package is simply glue between `numpy` and `plotly`, but it also allows to plot aims objects (buckets volumes and meshes) in a [Brainvisa](https://brainvisa.info/web/) environment.
 
 ---
 
