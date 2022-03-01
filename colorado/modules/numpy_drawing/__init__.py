@@ -11,7 +11,7 @@ def process_numpy_object(obj, **kwargs):
     log.debug(
         "Numpy object are ambiguous. Use a specific function (e.g. colorado.draw_volume)")
     if len(obj.shape) == 2 and obj.shape[1] == 3:
-        f = get_bucket_g_o
+        f = get_point_cloud_g_o
     elif len(obj.shape) == 3:
         f = get_volume_g_o
     else:

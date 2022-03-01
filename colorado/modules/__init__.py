@@ -1,19 +1,24 @@
 from . import aims_drawing
 from . import numpy_drawing
-from . import dico_toolbox_drawing
+from ..config import has_brainvisa_and_dico_toolbox as _hbv
+if _hbv:
+    # brainvisa and dico_toolbox are available
+    from . import dico_toolbox_drawing
 
+import logging as _logging
+_log = _logging.getLogger(__name__)
 
 drawing_functions = dict()
 
 # numpy drawing functions are loaded by default
 drawing_functions.update(numpy_drawing.drawing_functions)
 
-# aims drawing functions
-if aims_drawing.has_aims:
-    drawing_functions.update(aims_drawing.drawing_functions)
 
-# dico_toolbox drawing functions
-if dico_toolbox_drawing.has_dtb:
+if _hbv:
+    _log.info("updating drawing functions with brainvisa")
+    # aims drawing functions
+    drawing_functions.update(aims_drawing.drawing_functions)
+    # dico_toolbox drawing functions
     drawing_functions.update(dico_toolbox_drawing.drawing_functions)
 
 

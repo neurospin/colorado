@@ -11,4 +11,4 @@ scripts/
 *.ipynb_checkpoints
 
 docs/build
-docs/tutorial/notebooks
+examples_local/

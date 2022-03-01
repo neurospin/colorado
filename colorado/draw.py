@@ -1,7 +1,6 @@
-from importlib_metadata import Deprecated
 import plotly
 import numpy as _np
-from .modules import get_draw_function, is_drawable
+from .modules import get_draw_function
 
 
 import logging
@@ -14,7 +13,7 @@ def new_figure(*args, **kwargs):
 
 
 def draw(*args, fig=None, label=None, shift=(0, 0, 0), draw_function=None, draw_f_args=dict(), title="", **kwargs):
-    """Draw objects with plotly
+    """Draw objects with plotly.
 
     :param data: drawable objects or an iterable of drawable objects.
     :type data: soma.aims mesh/volume/bucket or numpy array
@@ -37,15 +36,21 @@ def draw(*args, fig=None, label=None, shift=(0, 0, 0), draw_function=None, draw_
     shift = _np.array(shift)
 
     for i, (name, obj) in enumerate(data.items()):
-
-        if draw_function is None:
-            f = get_draw_function(obj)
-        else:
-            f = draw_function
-
+        
+        # pass the plot name (label) to the drawing function as kwargs
         kwargs["name"] = name
-
-        trace = f(obj, shift=shift*i, **draw_f_args, **kwargs)
+        
+        try:
+        # The object has a special method called by colorado
+            trace = obj.__draw_with_colorado__(**draw_f_args, **kwargs)
+        except AttributeError:
+            # ...otherwise
+            if draw_function is None:
+                f = get_draw_function(obj)
+            else:
+                f = draw_function
+            
+            trace = f(obj, shift=shift*i, **draw_f_args, **kwargs)
 
         if isinstance(trace, plotly.basedatatypes.BaseTraceHierarchyType):
             fig.add_trace(trace)
