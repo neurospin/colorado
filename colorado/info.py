@@ -35,7 +35,7 @@ AUTHOR = "Marco Pascucci"
 AUTHOR_EMAIL = 'marpas.paris@gmail.com'
 PLATFORMS = "OS Independent"
 PROVIDES = ["colorado"]
-REQUIRES = ['plotly', 'numpy', 'dico_toolbox']
+REQUIRES = ['plotly', 'numpy']
 EXTRA_REQUIRES = {
     "doc": ["sphinx>=" + SPHINX_MIN_VERSION]}
 

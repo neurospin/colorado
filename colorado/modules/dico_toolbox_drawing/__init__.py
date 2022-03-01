@@ -1,20 +1,13 @@
 from ...graphic_objects import *
-import logging
-log = logging.getLogger(__name__)
+from ...config import has_brainvisa_and_dico_toolbox as _hbv
 
-has_dtb = True
+if _hbv:
+    import dico_toolbox as _dtb
 
-try:
-    import dico_toolbox
-except ImportError:
-    # module is not available
-    has_dtb = False
-
-
-if has_dtb:
+if _hbv:
     drawing_functions = {
-        dico_toolbox.wrappers.PyMesh: draw_pyMesh,
-        dico_toolbox.wrappers.PyMeshFrame: draw_pyMesh,
+        _dtb.wrappers.PyMesh: draw_pyMesh,
+        _dtb.wrappers.PyMeshFrame: draw_pyMesh,
     }
 else:
     drawing_functions = {}
