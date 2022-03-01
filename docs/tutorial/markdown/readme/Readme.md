@@ -64,6 +64,7 @@ To do so, isntall colorado from a Brainvisa shell. In Brainvisa ()>=5), you can 
 
 
 ### Resources
+* The [interactive version od this notebook](https://neurospin.github.io/colorado/tutorial/markdown/readme/Readme.html)
 * The example data used in this document are available in `docs/tutorial/data`
 * [documentation](https://neurospin.github.io/colorado/build/html/colorado.html#module-colorado)
 
