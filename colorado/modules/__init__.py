@@ -36,7 +36,7 @@ def get_draw_function(obj):
     """
     f = drawing_functions.get(type(obj), None)
 
-    if (f is None) and aims_drawing.has_aims:
+    if (f is None) and _hbv:
         if aims_drawing.is_aims_volume(obj):
             f = drawing_functions[aims_drawing.volume_function]
         else:
@@ -52,7 +52,7 @@ def is_drawable(obj):
     is_drawable = type(obj) in drawing_functions.keys()
 
     # check for aims volume
-    if (not is_drawable) and aims_drawing.has_aims:
+    if (not is_drawable) and _hbv:
         is_drawable = aims_drawing.is_aims_volume(obj)
 
     return is_drawable
