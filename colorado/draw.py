@@ -62,6 +62,7 @@ def draw(*args, fig=None, label=None, shift=(0, 0, 0), draw_function=None, draw_
                 # The object has a __draw_with_colorado__ method but the return value
                 # is not a plotly graph_object. In this case the drawing function
                 # has to be guessed
+                obj = trace
                 raise AttributeError
         except AttributeError:
             # ...otherwise
