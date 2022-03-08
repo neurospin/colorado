@@ -76,7 +76,7 @@ Colorado' `draw` function choses the best representation according to the type o
 The object that can be drawn are:
 - numpy arrays
 - aims buckets volumes and meshes
-- any objects that implements the specific `__draw_with_colorado__` method (returning a plotly graphic object)
+- any objects that implements the specific `__draw_with_colorado__` method (returning one of the above drawable objects or a plotly graphic object)
 
 The `draw()` function can plot numpy arrays, in this case the type of object is inferred by the array dimensions
 
