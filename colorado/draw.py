@@ -1,4 +1,6 @@
+from typing import Tuple
 import plotly
+import plotly.graph_objects as go
 import numpy as _np
 from .modules import get_draw_function
 
@@ -15,16 +17,29 @@ def new_figure(*args, **kwargs):
 def draw(*args, fig=None, label=None, shift=(0, 0, 0), draw_function=None, draw_f_args=dict(), title="", **kwargs):
     """Draw objects with plotly.
 
-    :param data: drawable objects or an iterable of drawable objects.
-    :type data: soma.aims mesh/volume/bucket or numpy array
-    :param fig: the plotly figure, if None, one is created, defaults to None
-    :type fig: plotly.graph_objects.Figure, optional
-    :param label: a string or an iterable of labels for the data.
-    :type label: list[str], optional
-    :param shift: shift the plots in data each by (x,y,z), defaults to (0,0,0)
-    :type shift: tuple, optional
-    :return: a plotly figure
-    :rtype: plotly.graph_objects.Figure
+    args can be a drawable object or an iterable/dict of drawable objects.
+    Drawable objects are:
+        - 3D numpy arrays, interpreted as voulmetric images
+        - 2D (N,3) arrays, interpreted as point-clouds
+        - Brainvisa's Aims Volumes, Buckets and Meshes
+        - custom objects that implement a __draw_with_colorado__ method returning either
+          a drawable object or a plotly.graph_object object
+
+
+    Args:
+        *args : drawable objects or an iterable/dict of drawable objects.
+        fig (plotly.graph_object, optional): A Figure to which this object will be added. Defaults to None.
+        label (str, optional): Label of this drawing. Defaults to None.
+        shift (tuple, optional): constant offset added to all points of this drawing. Defaults to (0, 0, 0).
+        draw_function (function, optional): A function that returns a plotly graph_object. Defaults to None.
+        draw_f_args (dict, optional): arguments directly passed to draw_function. Defaults to dict().
+        title (str, optional): Title of the Figure. Defaults to "".
+
+    Raises:
+        ValueError: The object(s) can not be drawn.
+
+    Returns:
+        plotly.graph_objs.Figure : a figure containing the drawing
     """
 
     # create a labeled dict of objects to draw
@@ -36,20 +51,25 @@ def draw(*args, fig=None, label=None, shift=(0, 0, 0), draw_function=None, draw_
     shift = _np.array(shift)
 
     for i, (name, obj) in enumerate(data.items()):
-        
+
         # pass the plot name (label) to the drawing function as kwargs
         kwargs["name"] = name
-        
+
         try:
-        # The object has a special method called by colorado
+            # The object has a special method called by colorado
             trace = obj.__draw_with_colorado__(**draw_f_args, **kwargs)
+            if not trace.__class__.__module__.startswith('plotly.graph_objs'):
+                # The object has a __draw_with_colorado__ method but the return value
+                # is not a plotly graph_object. In this case the drawing function
+                # has to be guessed
+                raise AttributeError
         except AttributeError:
             # ...otherwise
             if draw_function is None:
                 f = get_draw_function(obj)
             else:
                 f = draw_function
-            
+
             trace = f(obj, shift=shift*i, **draw_f_args, **kwargs)
 
         if isinstance(trace, plotly.basedatatypes.BaseTraceHierarchyType):
