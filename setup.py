@@ -18,7 +18,7 @@ setuptools.setup(name=release_info['NAME'],
                  long_description=long_description,
                  long_description_content_type="text/markdown",
                  url=release_info['URL'],
-                 packages=['colorado', 'colorado.graphic_objects', 'colorado.drawables'],
+                 packages=setuptools.find_packages(),
                  install_requires=release_info["REQUIRES"],
                  classifiers=release_info["CLASSIFIERS"]
                  )

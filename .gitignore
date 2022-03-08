@@ -12,3 +12,5 @@ scripts/
 
 docs/build
 examples_local/
+
+build/
